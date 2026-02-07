@@ -55,6 +55,8 @@ export const CreateMessageController = async (req: Request, res: Response) => {
         // Se for mensagem de CLIENTE, também envia para a sala "admin" (todos os admins)
         if (senderType === "CLIENTE") {
             io.to("admin").emit("newMessage", newMessage);
+            // Envia também para o próprio cliente que enviou (para aparecer na tela dele)
+            io.to(userId.toString()).emit("newMessage", newMessage);
         }
         
         // Se for mensagem de ADMIN, também envia para o admin que enviou (para atualizar a própria tela)

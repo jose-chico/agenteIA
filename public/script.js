@@ -11,7 +11,7 @@ const token = localStorage.getItem("token");
 let meuId = null; 
 let typingTimeout;
 
-const socket = window.io("http://127.0.0.1:8000", { transports: ["websocket"] });
+const socket = window.io("https://agenteia-1.onrender.com", { transports: ["websocket"] });
 
 // Função auxiliar para verificar autenticação
 function checkAuth(response) {
@@ -124,9 +124,7 @@ async function executeDelete(msgId, mode) {
 
 socket.on("connect", () => {
     console.log("🟢 Conectado!");
-    if (token && meuId) {
-        socket.emit("join", { userId: meuId, isAdmin: false });
-    }
+    // Entra na sala depois que carregar o histórico e tiver o meuId
 });
 
 socket.on("newMessage", (msg) => {
@@ -310,7 +308,7 @@ async function sendMessage(content) {
         if (response.ok) {
             const novaMsg = await response.json();
             if (!meuId) meuId = novaMsg.usuarioId;
-            renderMessage(novaMsg.content, "USER", novaMsg.createdAt, novaMsg.id, novaMsg.isRead);
+            // Não precisa renderizar aqui - o socket.on("newMessage") vai fazer isso
             messageInput.value = "";
         }
     } catch (error) { 
