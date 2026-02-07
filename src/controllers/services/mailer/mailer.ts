@@ -16,8 +16,14 @@ export let transporter: Transporter;
  */
 export async function verifySMTP(): Promise<void> {
     try {
-        if (FAKE) {
-            console.log("[mailer] 🧪 FAKE_MAIL habilitado — usando Ethereal (Modo Dev)");
+        // Se não tiver configuração de SMTP, usa Ethereal direto
+        if (!HOST || !USER || !PASS || FAKE) {
+            if (!HOST || !USER || !PASS) {
+                console.log("[mailer] ℹ️  SMTP não configurado. Usando Ethereal (modo teste).");
+            } else {
+                console.log("[mailer] 🧪 FAKE_MAIL habilitado — usando Ethereal (Modo Dev)");
+            }
+            
             const test = await nodemailer.createTestAccount();
             transporter = nodemailer.createTransport({
                 host: test.smtp.host,
@@ -26,24 +32,24 @@ export async function verifySMTP(): Promise<void> {
                 auth: { user: test.user, pass: test.pass },
             });
             await transporter.verify();
-            console.log("[mailer] ✅ Ethereal pronto para testes.");
+            console.log("[mailer] ✅ Ethereal pronto para envio de emails de teste.");
             return;
         }
 
-        console.log(`[mailer] 🛰️ Tentando SMTP: ${HOST || "Local"} na porta ${PORT}`);
+        console.log(`[mailer] 🛰️ Conectando ao SMTP: ${HOST}:${PORT}`);
         
         transporter = nodemailer.createTransport({
-            host: HOST || undefined,
+            host: HOST,
             port: PORT,
-            secure: PORT === 465, // True para 465, false para outras
-            auth: USER && PASS ? { user: USER, pass: PASS } : undefined,
+            secure: PORT === 465,
+            auth: { user: USER, pass: PASS },
         });
 
         await transporter.verify();
-        console.log("[mailer] ✅ SMTP Real Conectado com Sucesso!");
+        console.log("[mailer] ✅ SMTP conectado com sucesso!");
     } catch (e) {
-        console.error("[mailer] ❌ SMTP Error:", e);
-        console.log("[mailer] 🔄 Habilitando fallback Ethereal para não travar o sistema...");
+        console.error("[mailer] ❌ Erro ao conectar SMTP:", e instanceof Error ? e.message : e);
+        console.log("[mailer] 🔄 Usando fallback Ethereal...");
         
         const test = await nodemailer.createTestAccount();
         transporter = nodemailer.createTransport({
@@ -53,7 +59,7 @@ export async function verifySMTP(): Promise<void> {
             auth: { user: test.user, pass: test.pass },
         });
         await transporter.verify();
-        console.log("[mailer] ✅ Fallback Ethereal pronto.");
+        console.log("[mailer] ✅ Fallback Ethereal ativo.");
     }
 }
 
