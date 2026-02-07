@@ -28,9 +28,11 @@ exports.io = io;
 const uploadsPath = path_1.default.join(process.cwd(), "uploads");
 if (!fs_1.default.existsSync(uploadsPath))
     fs_1.default.mkdirSync(uploadsPath);
+const publicPath = path_1.default.join(process.cwd(), "public");
 app.use((0, cors_1.default)());
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use("/uploads", express_1.default.static(uploadsPath));
+app.use(express_1.default.static(publicPath));
 app.use(router_1.router);
 // CHAMADA DO SMTP
 (async () => {

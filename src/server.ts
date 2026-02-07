@@ -25,9 +25,12 @@ const io = new Server(httpServer, {
 const uploadsPath = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath);
 
+const publicPath = path.join(process.cwd(), "public");
+
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use("/uploads", express.static(uploadsPath));
+app.use(express.static(publicPath));
 app.use(router);
 
 // CHAMADA DO SMTP
