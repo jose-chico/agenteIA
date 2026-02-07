@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin 📊</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="admin-wrapper">
+        <aside id="sidebar">
+            <div id="sidebar-header">
+                <h3>Admin Chat 👑</h3>
+                <input type="text" id="searchClient" placeholder="🔍 Buscar cliente...">
+            </div>
+            <div class="client-list">
+                </div>
+            <div class="logout-area">
+                <span id="logout-btn" class="logout-btn-admin">🚪 Sair</span>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <header>
+                <h2>Gerenciamento 📥</h2>
+                <div><strong>Admin:</strong> Francisco 👑</div>
+            </header>
+
+            <div id="admin-messages">
+                <div class="empty-state">
+                    <p>Selecione um cliente para conversar 👤</p>
+                </div>
+            </div>
+
+            <div id="typing-status-admin"></div>
+
+            <div class="admin-input-area">
+                <div class="emoji-bar">
+                    <!-- Emojis Básicos -->
+                    <span onclick="insertEmojiAdmin('😊')">😊</span>
+                    <span onclick="insertEmojiAdmin('😂')">😂</span>
+                    <span onclick="insertEmojiAdmin('😍')">😍</span>
+                    <span onclick="insertEmojiAdmin('👍')">👍</span>
+                    <span onclick="insertEmojiAdmin('❤️')">❤️</span>
+                    <span onclick="insertEmojiAdmin('✅')">✅</span>
+                    
+                    <!-- Mercado Financeiro -->
+                    <span onclick="insertEmojiAdmin('💰')">💰</span>
+                    <span onclick="insertEmojiAdmin('💵')">💵</span>
+                    <span onclick="insertEmojiAdmin('💶')">💶</span>
+                    <span onclick="insertEmojiAdmin('💷')">💷</span>
+                    <span onclick="insertEmojiAdmin('💸')">💸</span>
+                    <span onclick="insertEmojiAdmin('💳')">💳</span>
+                    <span onclick="insertEmojiAdmin('🪙')">🪙</span>
+                    <span onclick="insertEmojiAdmin('📈')">📈</span>
+                    <span onclick="insertEmojiAdmin('📉')">📉</span>
+                    <span onclick="insertEmojiAdmin('📊')">📊</span>
+                    <span onclick="insertEmojiAdmin('💹')">💹</span>
+                    <span onclick="insertEmojiAdmin('🏦')">🏦</span>
+                    <span onclick="insertEmojiAdmin('🏧')">🏧</span>
+                    <span onclick="insertEmojiAdmin('💼')">💼</span>
+                    <span onclick="insertEmojiAdmin('🧮')">🧮</span>
+                    <span onclick="insertEmojiAdmin('🎯')">🎯</span>
+                    <span onclick="insertEmojiAdmin('🔔')">🔔</span>
+                    <span onclick="insertEmojiAdmin('⚡')">⚡</span>
+                    <span onclick="insertEmojiAdmin('🚀')">🚀</span>
+                    <span onclick="insertEmojiAdmin('🐂')">🐂</span>
+                    <span onclick="insertEmojiAdmin('🐻')">🐻</span>
+                    <span onclick="insertEmojiAdmin('💎')">💎</span>
+                </div>
+                <div class="admin-controls">
+                    <input type="file" id="imageInputAdmin" accept="image/*" style="display: none;">
+                    <button class="attach-btn attach-btn-admin" onclick="document.getElementById('imageInputAdmin').click()">📎</button>
+                    <input type="text" id="adminReply" placeholder="Digite sua resposta...">
+                    <button id="send-btn">Enviar</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="admin-msg-options-modal" class="modal-overlay" style="display: none;" onclick="closeAdminOptionsModal(event)">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px; text-align: center; color: var(--text-primary);">Opções da Mensagem</h3>
+            <div id="admin-modal-actions"></div>
+            <button class="msg-opt-btn cancel-global" onclick="closeAdminOptionsModal()">
+                <span class="icon">❌</span> Cancelar
+            </button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="http://localhost:8000/socket.io/socket.io.js"></script>
+    <script src="admin-script.js"></script>
+</body>
+</html>

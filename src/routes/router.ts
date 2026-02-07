@@ -1,75 +1,65 @@
 import { Router } from "express";
-import { CreateEmpresaController } from "../controllers/createEmpresa/CreateEmpresaController";
-import { ListandoEmpresaController } from "../controllers/createEmpresa/ListandoEpresaController";
-import { DeletarEmpresaController } from "../controllers/createEmpresa/DeletandoEmpresaController";
-import { AtualizandoEmpresaController } from "../controllers/createEmpresa/AtualizandoEmpresaController";
-import { CreateClienteController } from "../controllers/createCliente/CreateClienteController";
-import { ListandoClienteController } from "../controllers/createCliente/ListandoClienteController";
-import { ListandoUmaEmpresaController } from "../controllers/createEmpresa/ListandoUmaEmpresaController";
-import { ListandoUmClienteController } from "../controllers/createCliente/ListandoUmClienteController";
-import { AtualizandoClienteController } from "../controllers/createCliente/AtualizandoClienteController";
-import { DeletarClienteController } from "../controllers/createCliente/DeletandoClienteController";
-import { CreateOrcamentoController } from "../controllers/createOrcamento/CreateOrcamentoController";
-import { ListandoOrcametntoController } from "../controllers/createOrcamento/ListandoOrcamentoController";
-import { ListandoUmOrcamentoController } from "../controllers/createOrcamento/ListandoUmOrcamentoController";
-import { DeletarOrcamentoController } from "../controllers/createOrcamento/DeletandoOrcamentoController";
-import { AtualizandoOrcamentoController } from "../controllers/createOrcamento/AtualizandoOrcamentoController";
-import { CreateItemController } from "../controllers/createItem/CreateItemController";
-import { ListandoItemController } from "../controllers/createItem/ListandoItemController";
-import { ListandoUmItemController } from "../controllers/createItem/ListandoUmItemController";
-import { DeletarItemController } from "../controllers/createItem/DeletandoItemController";
-import { AtualizandoItemController } from "../controllers/createItem/AtualizandoItemController";
-import { CreateCidadeController } from "../controllers/createCidade/CreateCidadeController";
-import { CreateEstadoController } from "../controllers/createEstado/CreateEstadoController";
-import { ListandoCidadeController } from "../controllers/createCidade/ListandoCidadeController";
-import { ListandoUmaCidadeController } from "../controllers/createCidade/ListandoUmCidadeController";
-import { DeletarCidadeController } from "../controllers/createCidade/DeletandoCIdadeController";
-import { AtualizandoCidadeController } from "../controllers/createCidade/AtualizandoCidadeController";
-import { ListandoEstadoController } from "../controllers/createEstado/ListandoEstadoController";
-import { ListandoUmEstadoController } from "../controllers/createEstado/ListandoUmEstadoController";
-import { DeletarEstadoController } from "../controllers/createEstado/DeletandoCIdadeController";
-import { AtualizandoEstadoController } from "../controllers/createEstado/AtualizandoCidadeController";
-import { AuthMiddlewares } from "../controllers/middlewares/auth";
-import { AuthController } from "../controllers/authtoken/AuthController";
+import multer from "multer";
+import path from "path";
+import { AuthMiddleware } from "@/middlewares/auth";
+
+// Controllers de Usuário
+import { CreateUserController } from "@/controllers/User/CreateUserController";
+import { LoginController } from "@/controllers/User/LoginController";
+
+// Controllers de Autenticação (Esqueci a Senha)
+
+import { ForgotPasswordController } from "@/controllers/auth/ForgotPasswordController";
+import { ResetPasswordController } from "@/controllers/auth/ResetPasswordController";
+
+// Outros Controllers
+import { ListClientesController } from "@/controllers/Cliente/ListClientesController";
+import { DeleteClienteController } from "@/controllers/Cliente/DeleteClienteController";
+import { ListMessagesController, ListMyMessagesController } from "@/controllers/Message/ListMessagesController";
+import { CreateMessageController } from "@/controllers/Message/CreateMessageController";
+import { DeleteMessageController } from "@/controllers/Message/DeleteMessageController";
+import { MarkAsReadController } from "@/controllers/Message/MarkAsReadController";
+import { UnreadCountController } from "@/controllers/Message/UnreadCountController";
 
 const router = Router();
 
-router.post("/empresa", CreateEmpresaController );
-router.get("/empresas", AuthMiddlewares, ListandoEmpresaController );
-router.get("/empresa", ListandoUmaEmpresaController );
-router.put("/empresa", AtualizandoEmpresaController);
-router.delete("/empresa", DeletarEmpresaController);
-router.post("/auth", AuthController);
+// --- CONFIGURAÇÃO DO MULTER PARA UPLOAD ---
+const storage = multer.diskStorage({
+    destination: "uploads/",
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage });
 
-router.post("/cliente", CreateClienteController );
-router.get("/clientes", ListandoClienteController );
-router.get("/cliente", ListandoUmClienteController );
-router.put("/cliente", AtualizandoClienteController);
-router.delete("/cliente", DeletarClienteController);
+// --- ROTAS DE USUÁRIO E AUTENTICAÇÃO ---
+router.post("/users", CreateUserController);
+router.post("/login", LoginController);
 
-router.post("/orcamento", CreateOrcamentoController );
-router.get("/orcamentos", ListandoOrcametntoController );
-router.get("/orcamento", ListandoUmOrcamentoController );
-router.delete("/orcamento", DeletarOrcamentoController);
-router.put("/orcamento", AtualizandoOrcamentoController);
+// Novas rotas de recuperação de senha
+router.post("/forgot-password", ForgotPasswordController); // Passo 1: Solicita o e-mail
+router.post("/reset-password", ResetPasswordController);   // Passo 2: Troca a senha com o token
 
-router.post("/item", CreateItemController );
-router.get("/itens", ListandoItemController );
-router.get("/item", ListandoUmItemController );
-router.delete("/item", DeletarItemController);
-router.put("/item", AtualizandoItemController);
+// --- ROTAS DE CLIENTE (ADMIN) ---
+router.get("/clientes", AuthMiddleware, ListClientesController);
+router.delete("/clientes/:id", AuthMiddleware, DeleteClienteController);
 
-router.post("/cidade", CreateCidadeController );
-router.get("/cidades", ListandoCidadeController );
-router.get("/cidade", ListandoUmaCidadeController );
-router.delete("/cidade", DeletarCidadeController);
-router.put("/cidade", AtualizandoCidadeController);
+// --- ROTAS DE MENSAGEM ---
+router.get("/messages/me", AuthMiddleware, ListMyMessagesController);
+router.get("/messages/:clienteId", AuthMiddleware, ListMessagesController);
+router.post("/messages", AuthMiddleware, CreateMessageController);
+router.delete("/messages/:id", AuthMiddleware, DeleteMessageController);
+router.patch("/messages/mark-read", AuthMiddleware, MarkAsReadController);
+router.get("/messages/unread/count", AuthMiddleware, UnreadCountController);
 
-router.post("/estado", CreateEstadoController );
-router.get("/estados", ListandoEstadoController );
-router.get("/estado", ListandoUmEstadoController );
-router.delete("/estado", DeletarEstadoController);
-router.put("/estado", AtualizandoEstadoController);
-
+// --- ROTA DE UPLOAD DE IMAGEM ---
+router.post("/messages/upload", AuthMiddleware, upload.single("image"), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+    }
+    const imageUrl = `http://localhost:8000/uploads/${req.file.filename}`;
+    return res.json({ url: imageUrl });
+});
 
 export { router };

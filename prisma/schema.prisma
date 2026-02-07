@@ -1,93 +1,100 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+// Configuração do Cliente Prisma
 generator client {
   provider = "prisma-client-js"
 }
 
+// Conexão com o Banco (PostgreSQL)
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model Empresa {
-  id          Int      @id @default(autoincrement())
-  nome        String
-  email       String   @unique
-  senha       String
-  cnpj        String
-  telefone    String
-  celular     String
-  endereco    String
-  razaosocial String
-  cep         String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// 1. Tabela de Usuários (Admins/Donos do Chat)
+model User {
+  id                   Int                  @id @default(autoincrement())
+  name                 String
+  email                String               @unique
+  phone                String?
+  password             String
+  
+  // Campos para o Stripe (Premium)
+  stripeCustomerId     String?              @unique
+  isPremium            Boolean              @default(false)
+  
+  // Relacionamento com tokens de reset
+  resetTokens          PasswordResetToken[]
 
-  cliente   Cliente[]
-  orcamento Orcamento[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
-  Cidade   Cidade? @relation(fields: [cidadeId], references: [id])
-  cidadeId Int?
+  // Relacionamentos
+  clientes             Cliente[]
+  messages             Message[]
 }
 
+// 2. Tabela de Clientes (Contatos do Chat)
 model Cliente {
-  id          Int      @id @default(autoincrement())
-  nome        String
-  email       String   @unique
-  cnpjcpf     String
-  telefone    String
-  celular     String
-  endereco    String
-  cep         String
-  razaosocial String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int       @id @default(autoincrement())
+  nome      String
+  email     String?
+  telefone  String?
+  status    String    @default("Ativo")
+  
+  usuarioId Int
+  usuario   User      @relation(fields: [usuarioId], references: [id])
 
-  orcamento Orcamento[]
-  Empresa   Empresa?    @relation(fields: [empresaId], references: [id])
-  empresaId Int?
-  Cidade    Cidade?     @relation(fields: [cidadeId], references: [id])
-  cidadeId  Int?
+  messages  Message[]
+  createdAt DateTime  @default(now())
 }
 
-model Orcamento {
-  id        Int      @id @default(autoincrement())
-  valor     Decimal
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  item      Item[]
-  Empresa   Empresa? @relation(fields: [empresaId], references: [id])
-  empresaId Int?
-  Cliente   Cliente? @relation(fields: [clienteId], references: [id])
-  clienteId Int?
-}
-
-model Item {
+// 3. Tabela de Mensagens
+model Message {
   id         Int      @id @default(autoincrement())
-  descricao  String
-  unidade    String
-  quantidade String
-  preco      Decimal
+  content    String   @db.Text
+  type       String   @default("text")
+  senderType String   // "ADMIN" ou "CLIENTE"
+  
+  // Controle de exclusão individual
+  deletedBy  Int[]    @default([])
+
+  // Status de leitura
+  isRead     Boolean  @default(false)
+  readAt     DateTime?
+  
+  usuarioId  Int
+  usuario    User     @relation(fields: [usuarioId], references: [id])
+  
+  clienteId  Int
+  cliente    Cliente  @relation(fields: [clienteId], references: [id])
+
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  Orcamento   Orcamento? @relation(fields: [orcamentoId], references: [id])
-  orcamentoId Int?
 }
 
-model Cidade {
-  id   Int    @id @default(autoincrement())
-  nome String
-
-  cliente  Cliente[]
-  empresa  Empresa[]
-  Estado   Estado?   @relation(fields: [estadoId], references: [id])
-  estadoId Int?
+// 4. Tabela para Tokens de Recuperação de Senha
+model PasswordResetToken {
+  id          Int       @id @default(autoincrement())
+  tokenHash   String    @unique
+  email       String    // E-mail de quem solicitou (ajuda na validação rápida)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  
+  usuarioId   Int
+  user        User      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 }
 
-model Estado {
-  id     Int      @id @default(autoincrement())
-  sigla  String
-  cidade Cidade[]
+// 5. Tabela de Pagamentos (Sincronizada com StripeWebhookController)
+model Payment {
+  id              Int      @id @default(autoincrement())
+  stripePaymentId String?  @unique
+  stripeSessionId String?  @unique
+  amount          Float
+  currency        String   @default("BRL")
+  status          String
+  customerEmail   String?
+  customerName    String?
+  paymentMethod   String?  // O CAMPO QUE ESTAVA FALTANDO!
+  products        Json?    // Detalhes do que foi comprado
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
 }

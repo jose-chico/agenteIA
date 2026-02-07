@@ -1,0 +1,6 @@
+dist/
+node_modules/
+prisma/migrations/
+public/css/
+public/pages/*.html
+public/*.html

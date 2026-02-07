@@ -1,0 +1,431 @@
+const messageInput = document.getElementById("messageInput");
+const btnEnviar = document.getElementById("btnEnviar");
+const chatMessages = document.getElementById("chat-messages");
+const imageInputClient = document.getElementById("imageInputClient");
+const attachBtn = document.querySelector(".attach-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const statusEscritaCliente = document.getElementById("status-escrita-cliente");
+const clientSound = document.getElementById("notification-sound-client");
+
+const token = localStorage.getItem("token");
+let meuId = null; 
+let typingTimeout;
+
+const socket = window.io("http://127.0.0.1:8000", { transports: ["websocket"] });
+
+// Função auxiliar para verificar autenticação
+function checkAuth(response) {
+    if (response.status === 401) {
+        showToast("Sua sessão expirou. Faça login novamente.", "error");
+        setTimeout(() => {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }, 2000);
+        return false;
+    }
+    return true;
+}
+
+// --- SISTEMA DE TOAST E CONFIRMAÇÃO ---
+function showToast(message, type = "info") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    
+    let icon = "";
+    if (type === "success") icon = "✅";
+    else if (type === "error") icon = "❌";
+    else icon = "ℹ️";
+
+    toast.innerHTML = `<span style="font-size: 1.2em;">${icon}</span> <span>${message}</span>`;
+    
+    container.appendChild(toast);
+
+    // Remove após 3 segundos
+    setTimeout(() => {
+        toast.style.animation = "fadeOut 0.3s forwards";
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function showConfirmModal(message, onConfirm) {
+    const modal = document.getElementById("confirm-modal");
+    const msgEl = document.getElementById("confirm-message");
+    const btnYes = document.getElementById("confirm-btn-yes");
+    
+    if (!modal || !msgEl || !btnYes) return;
+
+    msgEl.innerText = message;
+    modal.style.display = "flex";
+
+    // Configura o botão Sim
+    btnYes.onclick = () => {
+        onConfirm();
+        closeConfirmModal();
+    };
+}
+
+function closeConfirmModal(event) {
+    if (event && event.target.id !== "confirm-modal") return;
+    const modal = document.getElementById("confirm-modal");
+    if (modal) modal.style.display = "none";
+}
+
+// --- FUNÇÃO PARA APAGAR MENSAGEM (REMODELADA) ---
+window.handleDeleteClient = async function(msgId, mode) {
+    // Se for apagar para todos, exige confirmação via Modal
+    if (mode === "TODOS") {
+        closeOptionsModal(); // Fecha o menu de opções primeiro
+        showConfirmModal("Tem certeza que deseja apagar esta mensagem para todos?", async () => {
+            await executeDelete(msgId, mode);
+        });
+        return;
+    }
+
+    // Apagar para mim executa direto
+    await executeDelete(msgId, mode);
+};
+
+async function executeDelete(msgId, mode) {
+    try {
+        const response = await fetch(`http://localhost:8000/messages/${msgId}`, {
+            method: "DELETE",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` 
+            },
+            body: JSON.stringify({ mode: mode })
+        });
+
+        if (!checkAuth(response)) return;
+
+        if (response.ok) {
+            if (mode === "TODOS") {
+                showToast("Mensagem apagada para todos.", "success");
+            } else {
+                const msgElement = document.getElementById(`msg-${msgId}`);
+                if (msgElement) {
+                    msgElement.style.transition = "0.3s";
+                    msgElement.style.opacity = "0";
+                    setTimeout(() => msgElement.remove(), 300);
+                }
+                showToast("Mensagem apagada para você.", "success");
+            }
+        } else {
+            showToast("Erro ao apagar mensagem.", "error");
+        }
+    } catch (error) {
+        console.error("Erro ao apagar:", error);
+        showToast("Erro de conexão.", "error");
+    }
+}
+
+socket.on("connect", () => {
+    console.log("🟢 Conectado!");
+    if (token && meuId) {
+        socket.emit("join", { userId: meuId, isAdmin: false });
+    }
+});
+
+socket.on("newMessage", (msg) => {
+    // Só processa mensagens destinadas a este cliente
+    if (msg.clienteId === meuId || msg.usuarioId === meuId) {
+        if (msg.senderType === "ADMIN") {
+            if (clientSound) clientSound.play().catch(() => {});
+            if (statusEscritaCliente) statusEscritaCliente.innerText = "";
+            
+            // Marca automaticamente como lida se a janela estiver visível
+            if (!document.hidden) {
+                marcarComoLida([msg.id]);
+            }
+        }
+        renderMessage(msg.content, msg.senderType, msg.createdAt, msg.id, msg.isRead);
+    }
+});
+
+// Escuta quando mensagens são marcadas como lidas
+socket.on("messageRead", (data) => {
+    data.messageIds.forEach(msgId => {
+        const msgElement = document.getElementById(`msg-${msgId}`);
+        if (msgElement) {
+            const checkmark = msgElement.querySelector(".read-status");
+            if (checkmark) {
+                checkmark.innerHTML = "✓✓";
+                checkmark.style.color = "#4CAF50";
+            }
+        }
+    });
+});
+
+// ESCUTA QUANDO ALGUÉM APAGA PARA TODOS
+socket.on("messageDeleted", (data) => {
+    const msgElement = document.getElementById(`msg-${data.id}`);
+    if (msgElement) msgElement.remove();
+});
+
+socket.on("displayTyping", (data) => {
+    if (data.senderType === "ADMIN" && statusEscritaCliente) {
+        statusEscritaCliente.innerText = data.isTyping ? "O suporte está digitando..." : "";
+    }
+});
+
+async function carregarMeuHistorico() {
+    if (!token) return;
+    try {
+        const response = await fetch("http://localhost:8000/messages/me", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        
+        if (!checkAuth(response)) return;
+
+        if (response.ok) {
+            const mensagens = await response.json();
+            if (mensagens.length > 0) {
+                meuId = mensagens[0].usuarioId || mensagens[0].clienteId;
+                // Entra na sala do socket após obter o ID
+                socket.emit("join", { userId: meuId, isAdmin: false });
+            }
+            chatMessages.innerHTML = ""; 
+            
+            // IDs de mensagens não lidas do admin
+            const unreadAdminMessages = [];
+            
+            mensagens.forEach(msg => {
+                const tipo = msg.clienteId && msg.senderType === "ADMIN" ? "ADMIN" : "USER";
+                renderMessage(msg.content, tipo, msg.createdAt, msg.id, msg.isRead);
+                
+                // Coleta mensagens não lidas do admin
+                if (msg.senderType === "ADMIN" && !msg.isRead) {
+                    unreadAdminMessages.push(msg.id);
+                }
+            });
+            
+            // Marca mensagens do admin como lidas ao carregar
+            if (unreadAdminMessages.length > 0) {
+                marcarComoLida(unreadAdminMessages);
+            }
+        }
+    } catch (error) { 
+        console.error(error); 
+    }
+}
+
+function renderMessage(content, senderType, timestamp, msgId, isRead = false) {
+    if (!chatMessages) return;
+    
+    const idElemento = `msg-${msgId}`;
+    if (document.getElementById(idElemento)) return;
+
+    const div = document.createElement("div");
+    div.id = idElemento; 
+    div.className = `message ${senderType === "ADMIN" ? "support" : "user"}`;
+    div.style.position = "relative";
+    
+    const hora = new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const isImage = content.includes("/uploads/") || content.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+
+    let htmlContent = isImage 
+        ? `<img src="${content}" class="chat-image" onclick="window.open('${content}')" alt="Imagem">`
+        : `<p>${content}</p>`;
+
+    // Normaliza o senderType para garantir comparação correta
+    const rawType = senderType || "CLIENTE";
+    const type = String(rawType).toUpperCase().trim();
+    const isMyMessage = type !== "ADMIN" && type !== "SUPPORT";
+    
+    // Status de leitura (apenas para mensagens do cliente)
+    const readStatus = isMyMessage ? `<span class="read-status" style="font-size:10px; opacity:0.7; margin-left:5px;">${isRead ? '✓✓' : '✓'}</span>` : '';
+
+    div.innerHTML = `
+        ${htmlContent}
+        <small style="font-size:10px; opacity:0.6; display:block; text-align:right;">
+            ${hora}${readStatus}
+        </small>
+    `;
+
+    div.onclick = (e) => {
+        // Evita abrir modal se clicar em imagem ou botões (embora não tenha botões dentro mais)
+        if (e.target.tagName !== "IMG" && e.target.tagName !== "BUTTON") {
+            openOptionsModal(msgId, isMyMessage);
+        }
+    };
+    
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// --- FUNÇÕES DO MODAL GLOBAL ---
+function openOptionsModal(msgId, isMyMessage) {
+    const modal = document.getElementById("msg-options-modal");
+    const actionsContainer = document.getElementById("modal-actions");
+    
+    if (!modal || !actionsContainer) return;
+
+    // Limpa ações anteriores
+    actionsContainer.innerHTML = "";
+
+    // Adiciona botão "Apagar para todos" apenas se for mensagem do usuário
+    if (isMyMessage) {
+        const btnAll = document.createElement("button");
+        btnAll.className = "msg-opt-btn delete-all";
+        btnAll.innerHTML = '<span class="icon">�️</span> Apagar para todos';
+        btnAll.onclick = () => {
+            handleDeleteClient(msgId, 'TODOS');
+            closeOptionsModal();
+        };
+        actionsContainer.appendChild(btnAll);
+    }
+
+    // Adiciona botão "Apagar para mim" (sempre visível)
+    const btnMe = document.createElement("button");
+    btnMe.className = "msg-opt-btn delete-me";
+    btnMe.innerHTML = '<span class="icon">👁️</span> Apagar para mim';
+    btnMe.onclick = () => {
+        handleDeleteClient(msgId, 'MIM');
+        closeOptionsModal();
+    };
+    actionsContainer.appendChild(btnMe);
+
+    // Exibe o modal
+    modal.style.display = "flex";
+}
+
+function closeOptionsModal(event) {
+    // Se passar evento, só fecha se clicar no overlay (fora do conteúdo)
+    if (event && event.target.id !== "msg-options-modal") return;
+    
+    const modal = document.getElementById("msg-options-modal");
+    if (modal) modal.style.display = "none";
+}
+
+async function sendMessage(content) {
+    if (!token || !content.trim()) return;
+    socket.emit("typing", { clienteId: meuId, senderType: "CLIENTE", isTyping: false });
+
+    try {
+        const response = await fetch("http://localhost:8000/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ content })
+        });
+
+        if (!checkAuth(response)) return;
+
+        if (response.ok) {
+            const novaMsg = await response.json();
+            if (!meuId) meuId = novaMsg.usuarioId;
+            renderMessage(novaMsg.content, "USER", novaMsg.createdAt, novaMsg.id, novaMsg.isRead);
+            messageInput.value = "";
+        }
+    } catch (error) { 
+        console.error(error); 
+    }
+}
+
+// Função para marcar mensagens como lidas
+async function marcarComoLida(messageIds) {
+    if (!token || !messageIds || messageIds.length === 0) return;
+    try {
+        const response = await fetch("http://localhost:8000/messages/mark-read", {
+            method: "PATCH",
+            headers: { 
+                "Content-Type": "application/json", 
+                "Authorization": `Bearer ${token}` 
+            },
+            body: JSON.stringify({ messageIds })
+        });
+        
+        checkAuth(response);
+    } catch (error) {
+        console.error("Erro ao marcar como lida:", error);
+    }
+}
+
+// Marca mensagens como lidas quando a janela fica visível
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        const unreadMessages = Array.from(document.querySelectorAll('.message.support')).map(el => {
+            const id = el.id.replace('msg-', '');
+            return parseInt(id);
+        }).filter(id => !isNaN(id));
+        
+        if (unreadMessages.length > 0) {
+            marcarComoLida(unreadMessages);
+        }
+    }
+});
+
+messageInput.oninput = () => {
+    if (!meuId || !socket) return;
+    socket.emit("typing", { clienteId: meuId, senderType: "CLIENTE", isTyping: true });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        socket.emit("typing", { clienteId: meuId, senderType: "CLIENTE", isTyping: false });
+    }, 2000);
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!token) { 
+        window.location.href = "login.html"; 
+        return; 
+    }
+    carregarMeuHistorico();
+});
+
+if (btnEnviar) {
+    btnEnviar.onclick = () => sendMessage(messageInput.value);
+}
+
+messageInput.onkeypress = (e) => { 
+    if (e.key === "Enter") sendMessage(messageInput.value); 
+};
+
+if (attachBtn && imageInputClient) {
+    attachBtn.onclick = () => imageInputClient.click();
+
+    imageInputClient.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append("image", file);
+        try {
+            const res = await fetch("http://localhost:8000/messages/upload", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+        });
+
+        if (!checkAuth(res)) return;
+
+        if (res.ok) {
+                const data = await res.json();
+                sendMessage(data.url);
+                imageInputClient.value = "";
+            }
+        } catch (err) { 
+            console.error(err); 
+        }
+    };
+}
+
+if (logoutBtn) {
+    logoutBtn.onclick = () => {
+        localStorage.clear();
+        window.location.href = "login.html";
+    };
+}
+
+// Função para inserir emoji no input
+function insertEmoji(emoji) {
+    const input = document.getElementById("messageInput");
+    if (input) {
+        const cursorPos = input.selectionStart;
+        const textBefore = input.value.substring(0, cursorPos);
+        const textAfter = input.value.substring(cursorPos);
+        input.value = textBefore + emoji + textAfter;
+        input.focus();
+        input.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+    }
+}
