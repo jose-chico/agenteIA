@@ -22,7 +22,7 @@ export const UnreadCountController = async (req: Request, res: Response) => {
 
         // Para admin: conta mensagens não lidas de todos os clientes
         const unreadByClient = await prisma.message.groupBy({
-            by: ['clienteId'],
+            by: ["clienteId"],
             where: {
                 isRead: false,
                 senderType: "CLIENTE"

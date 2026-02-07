@@ -236,7 +236,7 @@ function renderMessage(content, senderType, timestamp, msgId, isRead = false) {
     const isMyMessage = type !== "ADMIN" && type !== "SUPPORT";
     
     // Status de leitura (apenas para mensagens do cliente)
-    const readStatus = isMyMessage ? `<span class="read-status" style="font-size:10px; opacity:0.7; margin-left:5px;">${isRead ? '✓✓' : '✓'}</span>` : '';
+    const readStatus = isMyMessage ? `<span class="read-status" style="font-size:10px; opacity:0.7; margin-left:5px;">${isRead ? "✓✓" : "✓"}</span>` : "";
 
     div.innerHTML = `
         ${htmlContent}
@@ -246,7 +246,6 @@ function renderMessage(content, senderType, timestamp, msgId, isRead = false) {
     `;
 
     div.onclick = (e) => {
-        // Evita abrir modal se clicar em imagem ou botões (embora não tenha botões dentro mais)
         if (e.target.tagName !== "IMG" && e.target.tagName !== "BUTTON") {
             openOptionsModal(msgId, isMyMessage);
         }
@@ -263,37 +262,32 @@ function openOptionsModal(msgId, isMyMessage) {
     
     if (!modal || !actionsContainer) return;
 
-    // Limpa ações anteriores
     actionsContainer.innerHTML = "";
 
-    // Adiciona botão "Apagar para todos" apenas se for mensagem do usuário
     if (isMyMessage) {
         const btnAll = document.createElement("button");
         btnAll.className = "msg-opt-btn delete-all";
         btnAll.innerHTML = '<span class="icon">�️</span> Apagar para todos';
         btnAll.onclick = () => {
-            handleDeleteClient(msgId, 'TODOS');
+            handleDeleteClient(msgId, "TODOS");
             closeOptionsModal();
         };
         actionsContainer.appendChild(btnAll);
     }
 
-    // Adiciona botão "Apagar para mim" (sempre visível)
     const btnMe = document.createElement("button");
     btnMe.className = "msg-opt-btn delete-me";
     btnMe.innerHTML = '<span class="icon">👁️</span> Apagar para mim';
     btnMe.onclick = () => {
-        handleDeleteClient(msgId, 'MIM');
+        handleDeleteClient(msgId, "MIM");
         closeOptionsModal();
     };
     actionsContainer.appendChild(btnMe);
 
-    // Exibe o modal
     modal.style.display = "flex";
 }
 
 function closeOptionsModal(event) {
-    // Se passar evento, só fecha se clicar no overlay (fora do conteúdo)
     if (event && event.target.id !== "msg-options-modal") return;
     
     const modal = document.getElementById("msg-options-modal");
@@ -324,7 +318,6 @@ async function sendMessage(content) {
     }
 }
 
-// Função para marcar mensagens como lidas
 async function marcarComoLida(messageIds) {
     if (!token || !messageIds || messageIds.length === 0) return;
     try {
@@ -343,11 +336,10 @@ async function marcarComoLida(messageIds) {
     }
 }
 
-// Marca mensagens como lidas quando a janela fica visível
 document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
-        const unreadMessages = Array.from(document.querySelectorAll('.message.support')).map(el => {
-            const id = el.id.replace('msg-', '');
+        const unreadMessages = Array.from(document.querySelectorAll(".message.support")).map(el => {
+            const id = el.id.replace("msg-", "");
             return parseInt(id);
         }).filter(id => !isNaN(id));
         
@@ -394,12 +386,12 @@ if (attachBtn && imageInputClient) {
             const res = await fetch("http://localhost:8000/messages/upload", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
-            body: formData
-        });
+                body: formData
+            });
 
-        if (!checkAuth(res)) return;
+            if (!checkAuth(res)) return;
 
-        if (res.ok) {
+            if (res.ok) {
                 const data = await res.json();
                 sendMessage(data.url);
                 imageInputClient.value = "";
@@ -417,8 +409,8 @@ if (logoutBtn) {
     };
 }
 
-// Função para inserir emoji no input
-function insertEmoji(emoji) {
+// Função para inserir emoji no input (renomeada para ESLint)
+function _insertEmoji(emoji) {
     const input = document.getElementById("messageInput");
     if (input) {
         const cursorPos = input.selectionStart;

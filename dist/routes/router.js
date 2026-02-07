@@ -7,21 +7,21 @@ exports.router = void 0;
 const express_1 = require("express");
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
-const auth_1 = require("@/middlewares/auth");
+const auth_1 = require("../middlewares/auth");
 // Controllers de Usuário
-const CreateUserController_1 = require("@/controllers/User/CreateUserController");
-const LoginController_1 = require("@/controllers/User/LoginController");
+const CreateUserController_1 = require("../controllers/User/CreateUserController");
+const LoginController_1 = require("../controllers/User/LoginController");
 // Controllers de Autenticação (Esqueci a Senha)
-const ForgotPasswordController_1 = require("@/controllers/auth/ForgotPasswordController");
-const ResetPasswordController_1 = require("@/controllers/auth/ResetPasswordController");
+const ForgotPasswordController_1 = require("../controllers/auth/ForgotPasswordController");
+const ResetPasswordController_1 = require("../controllers/auth/ResetPasswordController");
 // Outros Controllers
-const ListClientesController_1 = require("@/controllers/Cliente/ListClientesController");
-const DeleteClienteController_1 = require("@/controllers/Cliente/DeleteClienteController");
-const ListMessagesController_1 = require("@/controllers/Message/ListMessagesController");
-const CreateMessageController_1 = require("@/controllers/Message/CreateMessageController");
-const DeleteMessageController_1 = require("@/controllers/Message/DeleteMessageController");
-const MarkAsReadController_1 = require("@/controllers/Message/MarkAsReadController");
-const UnreadCountController_1 = require("@/controllers/Message/UnreadCountController");
+const ListClientesController_1 = require("../controllers/Cliente/ListClientesController");
+const DeleteClienteController_1 = require("../controllers/Cliente/DeleteClienteController");
+const ListMessagesController_1 = require("../controllers/Message/ListMessagesController");
+const CreateMessageController_1 = require("../controllers/Message/CreateMessageController");
+const DeleteMessageController_1 = require("../controllers/Message/DeleteMessageController");
+const MarkAsReadController_1 = require("../controllers/Message/MarkAsReadController");
+const UnreadCountController_1 = require("../controllers/Message/UnreadCountController");
 const router = (0, express_1.Router)();
 exports.router = router;
 // --- CONFIGURAÇÃO DO MULTER PARA UPLOAD ---
@@ -44,11 +44,11 @@ router.get("/clientes", auth_1.AuthMiddleware, ListClientesController_1.ListClie
 router.delete("/clientes/:id", auth_1.AuthMiddleware, DeleteClienteController_1.DeleteClienteController);
 // --- ROTAS DE MENSAGEM ---
 router.get("/messages/me", auth_1.AuthMiddleware, ListMessagesController_1.ListMyMessagesController);
+router.get("/messages/unread/count", auth_1.AuthMiddleware, UnreadCountController_1.UnreadCountController);
 router.get("/messages/:clienteId", auth_1.AuthMiddleware, ListMessagesController_1.ListMessagesController);
 router.post("/messages", auth_1.AuthMiddleware, CreateMessageController_1.CreateMessageController);
 router.delete("/messages/:id", auth_1.AuthMiddleware, DeleteMessageController_1.DeleteMessageController);
 router.patch("/messages/mark-read", auth_1.AuthMiddleware, MarkAsReadController_1.MarkAsReadController);
-router.get("/messages/unread/count", auth_1.AuthMiddleware, UnreadCountController_1.UnreadCountController);
 // --- ROTA DE UPLOAD DE IMAGEM ---
 router.post("/messages/upload", auth_1.AuthMiddleware, upload.single("image"), (req, res) => {
     if (!req.file) {

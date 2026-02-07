@@ -47,11 +47,11 @@ router.delete("/clientes/:id", AuthMiddleware, DeleteClienteController);
 
 // --- ROTAS DE MENSAGEM ---
 router.get("/messages/me", AuthMiddleware, ListMyMessagesController);
+router.get("/messages/unread/count", AuthMiddleware, UnreadCountController);
 router.get("/messages/:clienteId", AuthMiddleware, ListMessagesController);
 router.post("/messages", AuthMiddleware, CreateMessageController);
 router.delete("/messages/:id", AuthMiddleware, DeleteMessageController);
 router.patch("/messages/mark-read", AuthMiddleware, MarkAsReadController);
-router.get("/messages/unread/count", AuthMiddleware, UnreadCountController);
 
 // --- ROTA DE UPLOAD DE IMAGEM ---
 router.post("/messages/upload", AuthMiddleware, upload.single("image"), (req, res) => {
