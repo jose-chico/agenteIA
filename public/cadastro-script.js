@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             // URL ATUALIZADA PARA O BACKEND NA PORTA 8000
-            const response = await fetch("http://localhost:8000/users", {
+            const response = await fetch("https://agenteia-1.onrender.com/users", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

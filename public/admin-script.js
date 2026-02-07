@@ -74,7 +74,7 @@ function closeAdminOptionsModal(event) {
 // --- FUNÇÃO PARA DELETAR MENSAGEM ---
 window.deleteMsg = async function(msgId, mode) {
     try {
-        const response = await fetch(`http://localhost:8000/messages/${msgId}`, {
+        const response = await fetch(`https://agenteia-1.onrender.com/messages/${msgId}`, {
             method: "DELETE",
             headers: { 
                 "Content-Type": "application/json",
@@ -134,7 +134,7 @@ function renderAdminMessage(content, senderType, timestamp, msgId, isRead = fals
 // --- LOGICA DE CLIENTES E MENSAGENS ---
 async function carregarListaClientes() {
     try {
-        const response = await fetch("http://localhost:8000/clientes", {
+        const response = await fetch("https://agenteia-1.onrender.com/clientes", {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -142,7 +142,7 @@ async function carregarListaClientes() {
             const clientes = await response.json();
             
             // Busca contador de não lidas
-            const unreadResponse = await fetch("http://localhost:8000/messages/unread/count", {
+            const unreadResponse = await fetch("https://agenteia-1.onrender.com/messages/unread/count", {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const unreadData = unreadResponse.ok ? await unreadResponse.json() : { unreadByClient: [] };
@@ -189,7 +189,7 @@ async function carregarListaClientes() {
 async function carregarMensagens(clienteId) {
     if (!clienteId) return;
     try {
-        const response = await fetch(`http://localhost:8000/messages/${clienteId}`, {
+        const response = await fetch(`https://agenteia-1.onrender.com/messages/${clienteId}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {
@@ -235,7 +235,7 @@ if (attachBtnAdmin && imageInputAdmin) {
         formData.append("image", file);
 
         try {
-            const res = await fetch("http://localhost:8000/messages/upload", {
+            const res = await fetch("https://agenteia-1.onrender.com/messages/upload", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
                 body: formData
@@ -244,7 +244,7 @@ if (attachBtnAdmin && imageInputAdmin) {
             if (res.ok) {
                 const data = await res.json();
                 // Envia a URL da imagem como uma mensagem
-                const response = await fetch("http://localhost:8000/messages", {
+                const response = await fetch("https://agenteia-1.onrender.com/messages", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                     body: JSON.stringify({ content: data.url, clienteId: Number(clienteSelecionadoId) })
@@ -262,7 +262,7 @@ if (attachBtnAdmin && imageInputAdmin) {
 // --- SOCKETS ---
 function inicializarSocket() {
     if (typeof window.io !== "undefined") {
-        socket = window.io("http://localhost:8000", { transports: ["websocket"] });
+        socket = window.io("https://agenteia-1.onrender.com", { transports: ["websocket"] });
 
         socket.on("connect", () => {
             console.log("🟢 Admin conectado!");
@@ -341,7 +341,7 @@ function inicializarSocket() {
 // Função para obter o ID do admin
 async function obterAdminId() {
     try {
-        const response = await fetch("http://localhost:8000/messages/me", {
+        const response = await fetch("https://agenteia-1.onrender.com/messages/me", {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {
@@ -362,7 +362,7 @@ async function enviarMensagemAdmin() {
     if (!conteudo || !clienteSelecionadoId) return;
 
     try {
-        const response = await fetch("http://localhost:8000/messages", {
+        const response = await fetch("https://agenteia-1.onrender.com/messages", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ content: conteudo, clienteId: Number(clienteSelecionadoId) })
@@ -390,7 +390,7 @@ adminReply.onkeypress = (e) => { if (e.key === "Enter") enviarMensagemAdmin(); }
 async function marcarComoLida(messageIds) {
     if (!token || !messageIds || messageIds.length === 0) return;
     try {
-        await fetch("http://localhost:8000/messages/mark-read", {
+        await fetch("https://agenteia-1.onrender.com/messages/mark-read", {
             method: "PATCH",
             headers: { 
                 "Content-Type": "application/json", 

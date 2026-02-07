@@ -90,7 +90,7 @@ window.handleDeleteClient = async function(msgId, mode) {
 
 async function executeDelete(msgId, mode) {
     try {
-        const response = await fetch(`http://localhost:8000/messages/${msgId}`, {
+        const response = await fetch(`https://agenteia-1.onrender.com/messages/${msgId}`, {
             method: "DELETE",
             headers: { 
                 "Content-Type": "application/json",
@@ -174,7 +174,7 @@ socket.on("displayTyping", (data) => {
 async function carregarMeuHistorico() {
     if (!token) return;
     try {
-        const response = await fetch("http://localhost:8000/messages/me", {
+        const response = await fetch("https://agenteia-1.onrender.com/messages/me", {
             headers: { "Authorization": `Bearer ${token}` }
         });
         
@@ -299,7 +299,7 @@ async function sendMessage(content) {
     socket.emit("typing", { clienteId: meuId, senderType: "CLIENTE", isTyping: false });
 
     try {
-        const response = await fetch("http://localhost:8000/messages", {
+        const response = await fetch("https://agenteia-1.onrender.com/messages", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ content })
@@ -321,7 +321,7 @@ async function sendMessage(content) {
 async function marcarComoLida(messageIds) {
     if (!token || !messageIds || messageIds.length === 0) return;
     try {
-        const response = await fetch("http://localhost:8000/messages/mark-read", {
+        const response = await fetch("https://agenteia-1.onrender.com/messages/mark-read", {
             method: "PATCH",
             headers: { 
                 "Content-Type": "application/json", 
@@ -383,7 +383,7 @@ if (attachBtn && imageInputClient) {
         const formData = new FormData();
         formData.append("image", file);
         try {
-            const res = await fetch("http://localhost:8000/messages/upload", {
+            const res = await fetch("https://agenteia-1.onrender.com/messages/upload", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
                 body: formData
