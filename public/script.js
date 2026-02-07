@@ -407,8 +407,8 @@ if (logoutBtn) {
     };
 }
 
-// Função para inserir emoji no input (renomeada para ESLint)
-function _insertEmoji(emoji) {
+// Função para inserir emoji no input
+function insertEmoji(emoji) {
     const input = document.getElementById("messageInput");
     if (input) {
         const cursorPos = input.selectionStart;
@@ -419,3 +419,25 @@ function _insertEmoji(emoji) {
         input.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
     }
 }
+
+// Função para mostrar/esconder o picker de emojis
+function toggleEmojiPicker(type) {
+    const emojiBar = document.getElementById(`emoji-bar-${type}`);
+    if (emojiBar) {
+        if (emojiBar.style.display === "none" || !emojiBar.style.display) {
+            emojiBar.style.display = "flex";
+        } else {
+            emojiBar.style.display = "none";
+        }
+    }
+}
+
+// Fecha o emoji picker ao clicar fora
+document.addEventListener("click", function(event) {
+    const emojiBar = document.getElementById("emoji-bar-client");
+    const emojiBtn = document.querySelector(".emoji-toggle-btn");
+    
+    if (emojiBar && emojiBtn && !emojiBar.contains(event.target) && event.target !== emojiBtn) {
+        emojiBar.style.display = "none";
+    }
+});

@@ -35,7 +35,7 @@
             <div id="typing-status-admin"></div>
 
             <div class="admin-input-area">
-                <div class="emoji-bar">
+                <div class="emoji-bar" id="emoji-bar-admin" style="display: none;">
                     <!-- Emojis Básicos -->
                     <span onclick="insertEmojiAdmin('😊')">😊</span>
                     <span onclick="insertEmojiAdmin('😂')">😂</span>
@@ -69,6 +69,7 @@
                     <span onclick="insertEmojiAdmin('💎')">💎</span>
                 </div>
                 <div class="admin-controls">
+                    <button class="emoji-toggle-btn" onclick="toggleEmojiPicker('admin')" title="Emojis">😊</button>
                     <input type="file" id="imageInputAdmin" accept="image/*" style="display: none;">
                     <button class="attach-btn attach-btn-admin" onclick="document.getElementById('imageInputAdmin').click()">📎</button>
                     <input type="text" id="adminReply" placeholder="Digite sua resposta...">

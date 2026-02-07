@@ -23,7 +23,7 @@
         <div id="status-escrita-cliente"></div>
 
         <div class="input-area">
-            <div class="emoji-bar">
+            <div class="emoji-bar" id="emoji-bar-client" style="display: none;">
                 <!-- Emojis Básicos -->
                 <span onclick="insertEmoji('😊')">😊</span>
                 <span onclick="insertEmoji('😂')">😂</span>
@@ -57,6 +57,7 @@
                 <span onclick="insertEmoji('💎')">💎</span>
             </div>
             <div class="controls">
+                <button class="emoji-toggle-btn" onclick="toggleEmojiPicker('client')" title="Emojis">😊</button>
                 <input type="file" id="imageInputClient" accept="image/*" style="display: none;">
                 <button class="attach-btn" onclick="document.getElementById('imageInputClient').click()">📎</button>
                 <input type="text" id="messageInput" placeholder="Digite sua dúvida...">

@@ -433,3 +433,25 @@ function insertEmojiAdmin(emoji) {
         input.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
     }
 }
+
+// Função para mostrar/esconder o picker de emojis (global para acesso via onclick)
+window.toggleEmojiPicker = function(type) {
+    const emojiBar = document.getElementById(`emoji-bar-${type}`);
+    if (emojiBar) {
+        if (emojiBar.style.display === "none" || !emojiBar.style.display) {
+            emojiBar.style.display = "flex";
+        } else {
+            emojiBar.style.display = "none";
+        }
+    }
+};
+
+// Fecha o emoji picker ao clicar fora
+document.addEventListener("click", function(event) {
+    const emojiBar = document.getElementById("emoji-bar-admin");
+    const emojiBtn = document.querySelector(".emoji-toggle-btn");
+    
+    if (emojiBar && emojiBtn && !emojiBar.contains(event.target) && event.target !== emojiBtn) {
+        emojiBar.style.display = "none";
+    }
+});
