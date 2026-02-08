@@ -6,11 +6,14 @@ const attachBtnAdmin = document.querySelector(".attach-btn-admin");
 const clientListDiv = document.querySelector(".client-list");
 const typingStatusAdmin = document.getElementById("typing-status-admin");
 const searchInput = document.getElementById("searchClient");
+const broadcastModeCheckbox = document.getElementById("broadcastMode");
+const broadcastHint = document.getElementById("broadcast-hint");
 
 let clienteSelecionadoId = null;
 let socket;
 let typingTimeout;
 let adminUserId = null;
+let allClients = []; // Array para armazenar todos os clientes
 const token = localStorage.getItem("token");
 const notificationSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
 
@@ -140,6 +143,7 @@ async function carregarListaClientes() {
 
         if (response.ok) {
             const clientes = await response.json();
+            allClients = clientes; // Salva todos os clientes para uso no broadcast
             
             // Busca contador de não lidas
             const unreadResponse = await fetch("https://agenteia-1.onrender.com/messages/unread/count", {
@@ -363,19 +367,80 @@ async function obterAdminId() {
 // --- EVENTOS DE ENVIO ---
 async function enviarMensagemAdmin() {
     const conteudo = adminReply.value.trim();
-    if (!conteudo || !clienteSelecionadoId) return;
+    const isBroadcast = broadcastModeCheckbox.checked;
+    
+    // Se não está em modo broadcast, precisa ter cliente selecionado
+    if (!conteudo || (!isBroadcast && !clienteSelecionadoId)) {
+        if (!isBroadcast && !clienteSelecionadoId) {
+            showToast("Selecione um cliente ou ative o modo broadcast", "error");
+        }
+        return;
+    }
 
     try {
-        const response = await fetch("https://agenteia-1.onrender.com/messages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-            body: JSON.stringify({ content: conteudo, clienteId: Number(clienteSelecionadoId) })
-        });
-        if (response.ok) { 
+        if (isBroadcast) {
+            // Modo BROADCAST - Envia para todos os clientes
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const cliente of allClients) {
+                try {
+                    const response = await fetch("https://agenteia-1.onrender.com/messages", {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json", 
+                            "Authorization": `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({ 
+                            content: `📢 [MENSAGEM PARA TODOS]\n\n${conteudo}`, 
+                            clienteId: Number(cliente.id) 
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (err) {
+                    errorCount++;
+                    console.error(`Erro ao enviar para cliente ${cliente.id}:`, err);
+                }
+            }
+
             adminReply.value = ""; 
-            socket.emit("typing", { clienteId: clienteSelecionadoId, senderType: "ADMIN", isTyping: false });
+            showToast(`📢 Mensagem enviada para ${successCount} cliente(s)`, "success");
+            
+            if (errorCount > 0) {
+                showToast(`⚠️ ${errorCount} mensagem(ns) falharam`, "error");
+            }
+        } else {
+            // Modo NORMAL - Envia apenas para o cliente selecionado
+            const response = await fetch("https://agenteia-1.onrender.com/messages", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ 
+                    content: conteudo, 
+                    clienteId: Number(clienteSelecionadoId) 
+                })
+            });
+            
+            if (response.ok) { 
+                adminReply.value = ""; 
+                socket.emit("typing", { 
+                    clienteId: clienteSelecionadoId, 
+                    senderType: "ADMIN", 
+                    isTyping: false 
+                });
+            }
         }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+        console.error(error);
+        showToast("Erro ao enviar mensagem", "error");
+    }
 }
 
 adminReply.oninput = () => {
@@ -468,4 +533,16 @@ if (backBtn) {
         if (adminMain) adminMain.classList.remove("show-chat");
         clienteSelecionadoId = null;
     };
+}
+
+// Listener para o toggle de broadcast
+if (broadcastModeCheckbox) {
+    broadcastModeCheckbox.addEventListener("change", (e) => {
+        if (e.target.checked) {
+            broadcastHint.style.display = "block";
+            showToast("📢 Modo Broadcast ativado: mensagem será enviada para TODOS", "info");
+        } else {
+            broadcastHint.style.display = "none";
+        }
+    });
 }
