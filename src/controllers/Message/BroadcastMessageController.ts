@@ -11,12 +11,8 @@ export const BroadcastMessageController = async (req: Request, res: Response) =>
             return res.status(400).json({ error: "Conteúdo da mensagem é obrigatório." });
         }
 
-        // Busca todos os clientes (não admins)
-        const clientes = await prisma.cliente.findMany({
-            where: {
-                role: "CLIENTE"
-            }
-        });
+        // Busca todos os clientes
+        const clientes = await prisma.cliente.findMany();
 
         if (clientes.length === 0) {
             return res.status(404).json({ error: "Nenhum cliente encontrado." });
