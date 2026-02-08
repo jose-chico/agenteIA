@@ -178,6 +178,10 @@ async function carregarListaClientes() {
                     document.querySelectorAll(".client-item-sidebar").forEach(d => d.classList.remove("active-chat"));
                     item.classList.add("active-chat");
                     
+                    // Mostra o painel de conversas (estilo WhatsApp)
+                    const adminMain = document.querySelector(".admin-main");
+                    if (adminMain) adminMain.classList.add("show-chat");
+                    
                     carregarMensagens(cliente.id);
                 };
                 clientListDiv.appendChild(item);
@@ -455,3 +459,13 @@ document.addEventListener("click", function(event) {
         emojiBar.style.display = "none";
     }
 });
+
+// Botão de voltar para lista de clientes (mobile - estilo WhatsApp)
+const backBtn = document.getElementById("back-to-list-btn");
+if (backBtn) {
+    backBtn.onclick = () => {
+        const adminMain = document.querySelector(".admin-main");
+        if (adminMain) adminMain.classList.remove("show-chat");
+        clienteSelecionadoId = null;
+    };
+}
