@@ -58,7 +58,8 @@ router.post("/messages/upload", AuthMiddleware, upload.single("image"), (req, re
     if (!req.file) {
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
     }
-    const imageUrl = `http://localhost:8000/uploads/${req.file.filename}`;
+    const baseUrl = process.env.BASE_URL || "http://localhost:8000";
+    const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
     return res.json({ url: imageUrl });
 });
 
