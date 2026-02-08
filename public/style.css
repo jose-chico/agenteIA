@@ -567,6 +567,7 @@ header strong {
     flex: 1;
     overflow-y: auto;
     padding: 10px;
+    min-height: 0; /* Importante para flex funcionar corretamente */
 }
 
 .client-item-sidebar {
@@ -765,8 +766,17 @@ header strong {
     #sidebar { 
         width: 100%;
         height: 100%;
+        height: 100vh;
+        height: 100dvh;
         position: relative;
         z-index: 1;
+    }
+    
+    /* Garante que client-list ocupe todo espaço disponível */
+    .client-list {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
     }
     
     /* Quando chat estiver aberto, sobrepõe a sidebar */
@@ -914,13 +924,13 @@ header strong {
     }
     
     /* Admin mobile pequeno */
-    #sidebar {
-        max-height: 35vh;
-    }
-    
     #searchClient {
         padding: 8px 10px;
         font-size: 0.85rem;
+    }
+    
+    .client-list {
+        padding: 8px;
     }
     
     .admin-input-area {
