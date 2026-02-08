@@ -685,25 +685,6 @@ header strong {
     margin-bottom: 10px;
 }
 
-.logout-area {
-    padding: 15px;
-    border-top: 1px solid var(--border-color);
-}
-
-.logout-btn-admin {
-    cursor: pointer;
-    color: #ef4444;
-    display: block;
-    text-align: center;
-    padding: 10px;
-    border-radius: 8px;
-    transition: background 0.2s;
-}
-
-.logout-btn-admin:hover {
-    background-color: rgba(239, 68, 68, 0.1);
-}
-
 .notification-dot {
     width: 10px;
     height: 10px;
