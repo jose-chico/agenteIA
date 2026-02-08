@@ -45,7 +45,7 @@ router.post("/forgot-password", ForgotPasswordController); // Passo 1: Solicita 
 router.post("/reset-password", ResetPasswordController);   // Passo 2: Troca a senha com o token
 
 // --- ROTAS DE CLIENTE (ADMIN) ---
-router.get("/clientes", AdminMiddleware, ListClientesController);
+router.get("/clientes", AuthMiddleware, ListClientesController); // Volta para AuthMiddleware temporariamente
 router.delete("/clientes/:id", AdminMiddleware, DeleteClienteController);
 
 // --- ROTAS DE MENSAGEM ---
