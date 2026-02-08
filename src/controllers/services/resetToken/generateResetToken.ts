@@ -41,10 +41,10 @@ export async function generateResetTokenAndLink(usuarioId: number) {
         },
     });
 
-    const appUrl = (process.env.APP_URL || "http://localhost:8000").replace(/\/$/, "");
+    const appUrl = (process.env.APP_URL || process.env.BASE_URL || "http://localhost:8000").replace(/\/$/, "");
     
     // Link final
-    const link = `${appUrl}/redefinir-senha.html?token=${tokenRaw}`;
+    const link = `${appUrl}/reset-password.html?token=${tokenRaw}`;
 
     return { tokenRaw, link, expiresAt };
 }

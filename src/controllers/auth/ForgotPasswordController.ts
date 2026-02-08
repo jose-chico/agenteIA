@@ -37,12 +37,9 @@ export const ForgotPasswordController = async (req: Request, res: Response): Pro
             console.log("[4] Gerando token e link...");
             const { link } = await generateResetTokenAndLink(user.id);
             
-            // --- AJUSTE DO LINK PARA O SEU FRONTEND ---
-            // 1. Muda a porta de 8000 para 5655
-            // 2. Adiciona /public/ no caminho para o Live Server encontrar o arquivo
-            const finalLink = link
-                .replace("8000", "5655") 
-                .replace("redefinir-senha.html", "public/redefinir-senha.html"); 
+            // Ajusta o link para usar a URL base do ambiente
+            const baseUrl = process.env.BASE_URL || "http://localhost:8000";
+            const finalLink = link.replace("http://localhost:8000", baseUrl);
 
             console.log("\n================================================");
             console.log(`🔥 LINK GERADO: ${finalLink}`);
