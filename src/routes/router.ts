@@ -2,13 +2,14 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import { AuthMiddleware } from "@/middlewares/auth";
+import { AdminMiddleware } from "@/middlewares/adminAuth";
 
 // Controllers de Usuário
 import { CreateUserController } from "@/controllers/User/CreateUserController";
 import { LoginController } from "@/controllers/User/LoginController";
 
 // Controllers de Autenticação (Esqueci a Senha)
-
+import { AdminLoginController } from "@/controllers/auth/AdminLoginController";
 import { ForgotPasswordController } from "@/controllers/auth/ForgotPasswordController";
 import { ResetPasswordController } from "@/controllers/auth/ResetPasswordController";
 
@@ -36,22 +37,23 @@ const upload = multer({ storage });
 
 // --- ROTAS DE USUÁRIO E AUTENTICAÇÃO ---
 router.post("/users", CreateUserController);
-router.post("/login", LoginController);
+router.post("/login", LoginController); // Login de clientes
+router.post("/admin/login", AdminLoginController); // Login de admins
 
 // Novas rotas de recuperação de senha
 router.post("/forgot-password", ForgotPasswordController); // Passo 1: Solicita o e-mail
 router.post("/reset-password", ResetPasswordController);   // Passo 2: Troca a senha com o token
 
 // --- ROTAS DE CLIENTE (ADMIN) ---
-router.get("/clientes", AuthMiddleware, ListClientesController);
-router.delete("/clientes/:id", AuthMiddleware, DeleteClienteController);
+router.get("/clientes", AdminMiddleware, ListClientesController);
+router.delete("/clientes/:id", AdminMiddleware, DeleteClienteController);
 
 // --- ROTAS DE MENSAGEM ---
 router.get("/messages/me", AuthMiddleware, ListMyMessagesController);
 router.get("/messages/unread/count", AuthMiddleware, UnreadCountController);
 router.get("/messages/:clienteId", AuthMiddleware, ListMessagesController);
 router.post("/messages", AuthMiddleware, CreateMessageController);
-router.post("/messages/broadcast", AuthMiddleware, BroadcastMessageController);
+router.post("/messages/broadcast", AdminMiddleware, BroadcastMessageController);
 router.delete("/messages/:id", AuthMiddleware, DeleteMessageController);
 router.patch("/messages/mark-read", AuthMiddleware, MarkAsReadController);
 

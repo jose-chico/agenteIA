@@ -17,6 +17,11 @@ let allClients = []; // Array para armazenar todos os clientes
 const token = localStorage.getItem("token");
 const notificationSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
 
+// Verifica se está autenticado, se não redireciona para admin-login
+if (!token) {
+    window.location.href = "admin-login.html";
+}
+
 function showToast(message, type = "info") {
     const container = document.getElementById("toast-container");
     if (!container) return;
@@ -532,4 +537,15 @@ if (broadcastModeCheckbox) {
             broadcastHint.style.display = "none";
         }
     });
+}
+
+// Botão de logout
+const logoutBtn = document.getElementById("logout-btn");
+if (logoutBtn) {
+    logoutBtn.onclick = () => {
+        if (confirm("Deseja realmente sair?")) {
+            localStorage.removeItem("token");
+            window.location.href = "admin-login.html";
+        }
+    };
 }
