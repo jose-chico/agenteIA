@@ -393,45 +393,23 @@ async function enviarMensagemAdmin() {
 
     try {
         if (isBroadcast) {
-            // Modo BROADCAST - Envia para todos os clientes
-            let successCount = 0;
-            let errorCount = 0;
-            
-            // Remove duplicatas baseado no ID
-            const uniqueClients = Array.from(new Map(allClients.map(c => [c.id, c])).values());
-            
-            console.log(`📢 Enviando para ${uniqueClients.length} cliente(s) únicos`);
+            // Modo BROADCAST - Usa endpoint específico que não salva para o admin
+            const response = await fetch("https://agenteia-1.onrender.com/messages/broadcast", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ content: conteudo })
+            });
 
-            for (const cliente of uniqueClients) {
-                try {
-                    const response = await fetch("https://agenteia-1.onrender.com/messages", {
-                        method: "POST",
-                        headers: { 
-                            "Content-Type": "application/json", 
-                            "Authorization": `Bearer ${token}` 
-                        },
-                        body: JSON.stringify({ 
-                            content: conteudo, 
-                            clienteId: Number(cliente.id) 
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        successCount++;
-                    } else {
-                        errorCount++;
-                    }
-                } catch (err) {
-                    errorCount++;
-                    console.error(`Erro ao enviar para cliente ${cliente.id}:`, err);
-                }
-            }
-
-            adminReply.value = ""; 
-            showToast(`📢 Mensagem enviada para ${successCount} cliente(s)`, "success");
-            
-            if (errorCount > 0) {
-                showToast(`⚠️ ${errorCount} mensagem(ns) falharam`, "error");
+            if (response.ok) {
+                const data = await response.json();
+                adminReply.value = ""; 
+                showToast(`📢 Mensagem enviada para ${data.count} cliente(s)`, "success");
+            } else {
+                const error = await response.json();
+                showToast(error.error || "Erro ao enviar broadcast", "error");
             }
         } else {
             // Modo NORMAL - Envia apenas para o cliente selecionado

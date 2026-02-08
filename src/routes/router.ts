@@ -20,6 +20,7 @@ import { CreateMessageController } from "@/controllers/Message/CreateMessageCont
 import { DeleteMessageController } from "@/controllers/Message/DeleteMessageController";
 import { MarkAsReadController } from "@/controllers/Message/MarkAsReadController";
 import { UnreadCountController } from "@/controllers/Message/UnreadCountController";
+import { BroadcastMessageController } from "@/controllers/Message/BroadcastMessageController";
 
 const router = Router();
 
@@ -50,6 +51,7 @@ router.get("/messages/me", AuthMiddleware, ListMyMessagesController);
 router.get("/messages/unread/count", AuthMiddleware, UnreadCountController);
 router.get("/messages/:clienteId", AuthMiddleware, ListMessagesController);
 router.post("/messages", AuthMiddleware, CreateMessageController);
+router.post("/messages/broadcast", AuthMiddleware, BroadcastMessageController);
 router.delete("/messages/:id", AuthMiddleware, DeleteMessageController);
 router.patch("/messages/mark-read", AuthMiddleware, MarkAsReadController);
 
