@@ -382,8 +382,13 @@ async function enviarMensagemAdmin() {
             // Modo BROADCAST - Envia para todos os clientes
             let successCount = 0;
             let errorCount = 0;
+            
+            // Remove duplicatas baseado no ID
+            const uniqueClients = Array.from(new Map(allClients.map(c => [c.id, c])).values());
+            
+            console.log(`📢 Enviando para ${uniqueClients.length} cliente(s) únicos`);
 
-            for (const cliente of allClients) {
+            for (const cliente of uniqueClients) {
                 try {
                     const response = await fetch("https://agenteia-1.onrender.com/messages", {
                         method: "POST",
@@ -392,7 +397,7 @@ async function enviarMensagemAdmin() {
                             "Authorization": `Bearer ${token}` 
                         },
                         body: JSON.stringify({ 
-                            content: `📢 [MENSAGEM PARA TODOS]\n\n${conteudo}`, 
+                            content: conteudo, 
                             clienteId: Number(cliente.id) 
                         })
                     });
