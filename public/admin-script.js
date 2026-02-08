@@ -143,7 +143,21 @@ async function carregarListaClientes() {
 
         if (response.ok) {
             const clientes = await response.json();
-            allClients = clientes; // Salva todos os clientes para uso no broadcast
+            
+            // Filtra apenas CLIENTES (remove admins da lista)
+            const clientesOnly = clientes.filter(c => c.role !== 'ADMIN' && c.role !== 'admin');
+            
+            // Remove duplicatas por EMAIL (pode ter mesmo email com IDs diferentes)
+            const uniqueByEmail = new Map();
+            clientesOnly.forEach(c => {
+                if (!uniqueByEmail.has(c.email)) {
+                    uniqueByEmail.set(c.email, c);
+                }
+            });
+            
+            allClients = Array.from(uniqueByEmail.values());
+            
+            console.log(`📋 Total de clientes únicos: ${allClients.length}`);
             
             // Busca contador de não lidas
             const unreadResponse = await fetch("https://agenteia-1.onrender.com/messages/unread/count", {
