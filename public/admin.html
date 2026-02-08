@@ -17,9 +17,6 @@
                 <input type="text" id="searchClient" placeholder="🔍 Buscar cliente...">
             </div>
             <div class="client-list">
-                </div>
-            <div class="logout-area">
-                <span id="logout-btn" class="logout-btn-admin">🚪 Sair</span>
             </div>
         </aside>
 
@@ -29,7 +26,10 @@
                     <button id="back-to-list-btn" class="back-btn" style="display: none;">←</button>
                     <h2>Gerenciamento 📥</h2>
                 </div>
-                <div><strong>Admin:</strong> Francisco 👑</div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div><strong>Admin:</strong> Francisco 👑</div>
+                    <span id="logout-btn" class="logout-btn-header" style="cursor: pointer; color: #ef4444; font-size: 0.9rem;">🚪 Sair</span>
+                </div>
             </header>
 
             <div id="admin-messages">
