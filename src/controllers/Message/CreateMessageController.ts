@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../database/client";
-import { io } from "../../server"; // 1. Importamos o 'io' que você exportou no server.ts
+import { getIO } from "../../socket"; // Importa getIO ao invés de io direto
 
 export const CreateMessageController = async (req: Request, res: Response) => {
     try {
@@ -49,6 +49,8 @@ export const CreateMessageController = async (req: Request, res: Response) => {
         });
 
         // --- 🚀 DISPARO EM TEMPO REAL ---
+        const io = getIO(); // Obtém a instância do socket
+        
         // Envia para o cliente específico (sala do usuário)
         io.to(finalClienteId.toString()).emit("newMessage", newMessage);
         

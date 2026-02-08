@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../database/client";
-import { io } from "../../server";
+import { getIO } from "../../socket";
 
 export const DeleteMessageController = async (req: Request, res: Response) => {
     try {
@@ -28,6 +28,8 @@ export const DeleteMessageController = async (req: Request, res: Response) => {
                 where: { id: Number(id) }
             });
 
+            const io = getIO(); // Obtém a instância do socket
+            
             // Notifica via socket que a mensagem foi apagada para todos
             if (messageExists.clienteId) {
                 io.to(messageExists.clienteId.toString()).emit("messageDeleted", { id: messageExists.id });

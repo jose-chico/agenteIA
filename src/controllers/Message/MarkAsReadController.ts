@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../database/client";
-import { io } from "../../server";
+import { getIO } from "../../socket";
 
 export const MarkAsReadController = async (req: Request, res: Response) => {
     try {
@@ -28,6 +28,7 @@ export const MarkAsReadController = async (req: Request, res: Response) => {
 
         // Notifica via socket que as mensagens foram lidas
         if (updatedMessages.count > 0) {
+            const io = getIO(); // Obtém a instância do socket
             const messages = await prisma.message.findMany({
                 where: { id: { in: messageIds } },
                 select: { id: true, clienteId: true, usuarioId: true }
