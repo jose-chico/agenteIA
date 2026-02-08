@@ -590,14 +590,14 @@ header strong {
 
 .admin-main {
     flex: 1;
-    display: none; /* Escondido inicialmente - estilo WhatsApp */
+    display: flex; /* Visível por padrão em desktop */
     flex-direction: column;
     background-color: var(--bg-primary);
     position: relative;
     align-items: center;
 }
 
-/* Classe para mostrar o painel quando cliente for selecionado */
+/* Classe para mostrar o painel quando cliente for selecionado (mobile) */
 .admin-main.show-chat {
     display: flex;
 }
@@ -851,6 +851,11 @@ header strong {
         z-index: 1;
     }
     
+    /* MOBILE: Esconde o painel até selecionar cliente */
+    .admin-main {
+        display: none;
+    }
+    
     /* Garante que client-list ocupe todo espaço disponível */
     .client-list {
         flex: 1;
@@ -860,6 +865,7 @@ header strong {
     
     /* Quando chat estiver aberto, sobrepõe a sidebar */
     .admin-main.show-chat {
+        display: flex;
         position: absolute;
         top: 0;
         left: 0;
