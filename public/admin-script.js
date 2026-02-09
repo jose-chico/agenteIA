@@ -122,7 +122,7 @@ function renderAdminMessage(content, senderType, timestamp, msgId, isRead = fals
         : `<span>${content}</span>`;
     
     // Status de leitura (apenas para mensagens do admin)
-    const readStatus = senderType === "ADMIN" ? `<span class="read-status" style="font-size:10px; opacity:0.7; margin-left:5px;">${isRead ? '✓✓' : '✓'}</span>` : '';
+    const readStatus = senderType === "ADMIN" ? `<span class="read-status" style="font-size:10px; opacity:0.7; margin-left:5px;">${isRead ? "✓✓" : "✓"}</span>` : "";
 
     div.innerHTML = `
         ${htmlContent}
@@ -170,12 +170,12 @@ async function carregarListaClientes() {
                 // Contador de não lidas
                 const unreadInfo = unreadData.unreadByClient.find(u => u.clienteId === cliente.id);
                 const unreadCount = unreadInfo ? unreadInfo.count : 0;
-                const unreadBadge = unreadCount > 0 ? `<span class="unread-badge" style="background:#ff3d00; color:#fff; border-radius:50%; padding:2px 6px; font-size:10px; font-weight:bold; margin-left:8px;">${unreadCount}</span>` : '';
+                const unreadBadge = unreadCount > 0 ? `<span class="unread-badge" style="background:#ff3d00; color:#fff; border-radius:50%; padding:2px 6px; font-size:10px; font-weight:bold; margin-left:8px;">${unreadCount}</span>` : "";
                 
                 item.innerHTML = `
                     <div class="client-info-name" style="font-weight: bold; color: #263238;">👤 ${cliente.name || cliente.email.split("@")[0]}${unreadBadge}</div>
                     <div class="client-info-email" style="font-size: 0.8em; color: #546e7a;">${cliente.email}</div>
-                    <span class="notification-dot" id="dot-${cliente.id}" style="${unreadCount > 0 ? 'display:block' : 'display:none'}"></span>
+                    <span class="notification-dot" id="dot-${cliente.id}" style="${unreadCount > 0 ? "display:block" : "display:none"}"></span>
                 `;
                 
                 item.onclick = () => {
@@ -185,7 +185,7 @@ async function carregarListaClientes() {
                     if (dot) dot.style.display = "none";
                     
                     // Remove badge
-                    const badge = item.querySelector('.unread-badge');
+                    const badge = item.querySelector(".unread-badge");
                     if (badge) badge.remove();
 
                     document.querySelectorAll(".client-item-sidebar").forEach(d => d.classList.remove("active-chat"));
@@ -306,15 +306,15 @@ function inicializarSocket() {
                         if (dot) dot.style.display = "block";
                         
                         // Atualiza ou cria badge de não lidas
-                        let badge = itemCliente.querySelector('.unread-badge');
+                        let badge = itemCliente.querySelector(".unread-badge");
                         if (badge) {
                             badge.textContent = (parseInt(badge.textContent) + 1).toString();
                         } else {
-                            const nameDiv = itemCliente.querySelector('.client-info-name');
-                            badge = document.createElement('span');
-                            badge.className = 'unread-badge';
-                            badge.style.cssText = 'background:#ff3d00; color:#fff; border-radius:50%; padding:2px 6px; font-size:10px; font-weight:bold; margin-left:8px;';
-                            badge.textContent = '1';
+                            const nameDiv = itemCliente.querySelector(".client-info-name");
+                            badge = document.createElement("span");
+                            badge.className = "unread-badge";
+                            badge.style.cssText = "background:#ff3d00; color:#fff; border-radius:50%; padding:2px 6px; font-size:10px; font-weight:bold; margin-left:8px;";
+                            badge.textContent = "1";
                             nameDiv.appendChild(badge);
                         }
                     } else {
