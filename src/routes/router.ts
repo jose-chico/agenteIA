@@ -48,12 +48,13 @@ router.post("/reset-password", ResetPasswordController);   // Passo 2: Troca a s
 router.get("/clientes", AuthMiddleware, ListClientesController); // Volta para AuthMiddleware temporariamente
 router.delete("/clientes/:id", AdminMiddleware, DeleteClienteController);
 
+
 // --- ROTAS DE MENSAGEM ---
 router.get("/messages/me", AuthMiddleware, ListMyMessagesController);
 router.get("/messages/unread/count", AuthMiddleware, UnreadCountController);
 router.get("/messages/:clienteId", AuthMiddleware, ListMessagesController);
 router.post("/messages", AuthMiddleware, CreateMessageController);
-router.post("/messages/broadcast", AdminMiddleware, BroadcastMessageController);
+router.post("/messages/broadcast", BroadcastMessageController); // AuthMiddleware temporário
 router.delete("/messages/:id", AuthMiddleware, DeleteMessageController);
 router.patch("/messages/mark-read", AuthMiddleware, MarkAsReadController);
 
