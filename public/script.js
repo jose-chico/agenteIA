@@ -11,8 +11,13 @@ const token = localStorage.getItem("token");
 let meuId = null; 
 let typingTimeout;
 
-const socket = window.io("https://agenteia-1.onrender.com", { transports: ["websocket"] });
-
+const socket = window.io("https://agenteia-1.onrender.com", {   
+    transports: ["websocket", "polling"],  
+    reconnection: true,  
+    reconnectionAttempts: 5,  
+    reconnectionDelay: 1000,  
+    timeout: 20000  
+});
 // Função auxiliar para verificar autenticação
 function checkAuth(response) {
     if (response.status === 401) {
