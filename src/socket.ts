@@ -14,16 +14,16 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
     io.on("connection", (socket) => {
         console.log(`🟢 Cliente conectado: ${socket.id}`);
 
-        socket.on("join", (userId: string) => {
-            socket.join(userId);
-            console.log(`👤 User ${userId} entrou na sala ${userId}`);
-        });
-
-        socket.on("joinAdmin", (adminId: string) => {
-            socket.join("admin");
-            socket.join(adminId);
-            console.log(`👑 Admin ${adminId} entrou nas salas: admin, ${adminId}`);
-        });
+       socket.on("join", (data: { userId: number | string; isAdmin: boolean }) => {  
+    const userId = data.userId.toString();  
+    socket.join(userId);  
+    console.log(`👤 User ${userId} entrou na sala ${userId}`);  
+      
+    if (data.isAdmin) {  
+        socket.join("admin");  
+        console.log(`👑 Admin ${userId} também entrou na sala "admin"`);  
+    }  
+});
 
         socket.on("typing", (data: { clienteId: number; senderType: string; isTyping: boolean }) => {
             const targetRoom = data.senderType === "ADMIN" ? data.clienteId.toString() : "admin";
