@@ -276,92 +276,89 @@ if (attachBtnAdmin && imageInputAdmin) {
     };
 }
 
-// --- SOCKETS ---
-
-socket = window.io("https://agenteia-1.onrender.com", {   
-    transports: ["websocket", "polling"],  
-    reconnection: true,  
-    reconnectionAttempts: 5,  
-    reconnectionDelay: 1000,  
-    timeout: 20000  
-});
-
-function inicializarSocket() {
-    if (typeof window.io !== "undefined") {
-        socket = window.io("https://agenteia-1.onrender.com", { transports: ["websocket"] });
-
-        socket.on("connect", () => {
-            console.log("🟢 Admin conectado!");
-            // Obtém o ID do admin e entra na sala
-            obterAdminId().then(id => {
-                if (id) {
-                    adminUserId = id;
-                    socket.emit("join", { userId: adminUserId, isAdmin: true });
-                }
-            });
-        });
-
-        socket.on("newMessage", (msg) => {
-            const idConversa = String(msg.senderType === "ADMIN" ? msg.clienteId : (msg.usuarioId || msg.clienteId));
-            const itemCliente = document.getElementById(`user-item-${idConversa}`);
-
-            if (msg.senderType !== "ADMIN") {
-                notificationSound.play().catch(() => {});
-                if (itemCliente) {
-                    clientListDiv.prepend(itemCliente); 
-                    if (String(clienteSelecionadoId) !== idConversa) {
-                        itemCliente.classList.add("unreads-highlight");
-                        const dot = document.getElementById(`dot-${idConversa}`);
-                        if (dot) dot.style.display = "block";
-                        
-                        // Atualiza ou cria badge de não lidas
-                        let badge = itemCliente.querySelector(".unread-badge");
-                        if (badge) {
-                            badge.textContent = (parseInt(badge.textContent) + 1).toString();
-                        } else {
-                            const nameDiv = itemCliente.querySelector(".client-info-name");
-                            badge = document.createElement("span");
-                            badge.className = "unread-badge";
-                            badge.style.cssText = "background:#ff3d00; color:#fff; border-radius:50%; padding:2px 6px; font-size:10px; font-weight:bold; margin-left:8px;";
-                            badge.textContent = "1";
-                            nameDiv.appendChild(badge);
-                        }
-                    } else {
-                        // Marca como lida automaticamente se estiver vendo a conversa
-                        marcarComoLida([msg.id]);
-                    }
-                }
-            }
-
-            if (clienteSelecionadoId && String(clienteSelecionadoId) === idConversa) {
-                renderAdminMessage(msg.content, msg.senderType, msg.createdAt, msg.id, msg.isRead);
-            }
-        });
-
-        socket.on("messageRead", (data) => {
-            data.messageIds.forEach(msgId => {
-                const msgElement = document.getElementById(`msg-${msgId}`);
-                if (msgElement) {
-                    const checkmark = msgElement.querySelector(".read-status");
-                    if (checkmark) {
-                        checkmark.innerHTML = "✓✓";
-                        checkmark.style.color = "#4CAF50";
-                    }
-                }
-            });
-        });
-
-        socket.on("messageDeleted", (data) => {
-            const msgElement = document.getElementById(`msg-${data.id}`);
-            if (msgElement) msgElement.remove();
-        });
-
-        socket.on("displayTyping", (data) => {
-            if (clienteSelecionadoId && String(data.clienteId) === String(clienteSelecionadoId) && data.senderType === "CLIENTE") {
-                if (typingStatusAdmin) typingStatusAdmin.innerText = data.isTyping ? "O cliente está escrevendo..." : "";
-            }
-        });
-    }
+// --- SOCKETS ---  
+function inicializarSocket() {  
+    if (typeof window.io !== "undefined") {  
+        socket = window.io("https://agenteia-1.onrender.com", {   
+            transports: ["websocket", "polling"],  
+            reconnection: true,  
+            reconnectionAttempts: 5,  
+            reconnectionDelay: 1000,  
+            timeout: 20000  
+        });  
+  
+        socket.on("connect", () => {  
+            console.log("🟢 Admin conectado!");  
+            // Obtém o ID do admin e entra na sala  
+            obterAdminId().then(id => {  
+                if (id) {  
+                    adminUserId = id;  
+                    socket.emit("join", { userId: adminUserId, isAdmin: true });  
+                }  
+            });  
+        });  
+  
+        socket.on("newMessage", (msg) => {  
+            const idConversa = String(msg.senderType === "ADMIN" ? msg.clienteId : (msg.usuarioId || msg.clienteId));  
+            const itemCliente = document.getElementById(`user-item-${idConversa}`);  
+  
+            if (msg.senderType !== "ADMIN") {  
+                notificationSound.play().catch(() => {});  
+                if (itemCliente) {  
+                    clientListDiv.prepend(itemCliente);   
+                    if (String(clienteSelecionadoId) !== idConversa) {  
+                        itemCliente.classList.add("unreads-highlight");  
+                        const dot = document.getElementById(`dot-${idConversa}`);  
+                        if (dot) dot.style.display = "block";  
+                          
+                        // Atualiza ou cria badge de não lidas  
+                        let badge = itemCliente.querySelector(".unread-badge");  
+                        if (badge) {  
+                            badge.textContent = (parseInt(badge.textContent) + 1).toString();  
+                        } else {  
+                            const nameDiv = itemCliente.querySelector(".client-info-name");  
+                            badge = document.createElement("span");  
+                            badge.className = "unread-badge";  
+                            badge.style.cssText = "background:#ff3d00; color:#fff; border-radius:50%; padding:2px 6px; font-size:10px; font-weight:bold; margin-left:8px;";  
+                            badge.textContent = "1";  
+                            nameDiv.appendChild(badge);  
+                        }  
+                    } else {  
+                        // Marca como lida automaticamente se estiver vendo a conversa  
+                        marcarComoLida([msg.id]);  
+                    }  
+                }  
+            }  
+  
+            if (clienteSelecionadoId && String(clienteSelecionadoId) === idConversa) {  
+                renderAdminMessage(msg.content, msg.senderType, msg.createdAt, msg.id, msg.isRead);  
+            }  
+        });  
+  
+        socket.on("messageRead", (data) => {  
+            data.messageIds.forEach(msgId => {  
+                const msgElement = document.getElementById(`msg-${msgId}`);  
+                if (msgElement) {  
+                    const checkmark = msgElement.querySelector(".read-status");  
+                    if (checkmark) {  
+                        checkmark.innerHTML = "✓✓";  
+                        checkmark.style.color = "#4CAF50";  
+                    }  
+                }  
+            });  
+        });  
+  
+        socket.on("messageDeleted", (data) => {  
+            const msgElement = document.getElementById(`msg-${data.id}`);  
+            if (msgElement) msgElement.remove();  
+        });  
+  
+        socket.on("displayTyping", (data) => {  
+            if (clienteSelecionadoId && String(data.clienteId) === String(clienteSelecionadoId) && data.senderType === "CLIENTE") {  
+                if (typingStatusAdmin) typingStatusAdmin.innerText = data.isTyping ? "O cliente está escrevendo..." : "";  
+            }  
+        });  
+    }  
 }
 
 // Função para obter o ID do admin
