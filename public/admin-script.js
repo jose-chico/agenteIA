@@ -281,7 +281,7 @@ if (attachBtnAdmin && imageInputAdmin) {
 // --- SOCKETS ---  
 function inicializarSocket() {  
     if (typeof window.io !== "undefined") {  
-        socket = window.io("https://agenteia-1.onrender.com", {   
+        socket = window.io("https://agenteia-xzfd.onrender.com", {   
             transports: ["websocket", "polling"],  
             reconnection: true,  
             reconnectionAttempts: 5,  
