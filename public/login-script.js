@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.innerText = "Verificando...";
 
         try {
-            const response = await fetch("https://agenteia-1.onrender.com/login", {
+            const response = await fetch("https://agenteia-xzfd.onrender.com/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

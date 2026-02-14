@@ -11,7 +11,7 @@ const token = localStorage.getItem("token");
 let meuId = null; 
 let typingTimeout;
 
-const socket = window.io("https://agenteia-1.onrender.com", {   
+const socket = window.io("https://agenteia-xzfd.onrender.com", {   
     transports: ["websocket", "polling"],  
     reconnection: true,  
     reconnectionAttempts: 5,  
@@ -95,7 +95,7 @@ window.handleDeleteClient = async function(msgId, mode) {
 
 async function executeDelete(msgId, mode) {
     try {
-        const response = await fetch(`https://agenteia-1.onrender.com/messages/${msgId}`, {
+        const response = await fetch(`https://agenteia-xzfd.onrender.com/messages/${msgId}`, {
             method: "DELETE",
             headers: { 
                 "Content-Type": "application/json",
@@ -177,7 +177,7 @@ socket.on("displayTyping", (data) => {
 async function carregarMeuHistorico() {
     if (!token) return;
     try {
-        const response = await fetch("https://agenteia-1.onrender.com/messages/me", {
+        const response = await fetch("https://agenteia-xzfd.onrender.com/messages/me", {
             headers: { "Authorization": `Bearer ${token}` }
         });
         
@@ -302,7 +302,7 @@ async function sendMessage(content) {
     socket.emit("typing", { clienteId: meuId, senderType: "CLIENTE", isTyping: false });
 
     try {
-        const response = await fetch("https://agenteia-1.onrender.com/messages", {
+        const response = await fetch("https://agenteia-xzfd.onrender.com/messages", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ content })
@@ -324,7 +324,7 @@ async function sendMessage(content) {
 async function marcarComoLida(messageIds) {
     if (!token || !messageIds || messageIds.length === 0) return;
     try {
-        const response = await fetch("https://agenteia-1.onrender.com/messages/mark-read", {
+        const response = await fetch("https://agenteia-xzfd.onrender.com/mark-read", {
             method: "PATCH",
             headers: { 
                 "Content-Type": "application/json", 
@@ -386,7 +386,7 @@ if (attachBtn && imageInputClient) {
         const formData = new FormData();
         formData.append("image", file);
         try {
-            const res = await fetch("https://agenteia-1.onrender.com/messages/upload", {
+            const res = await fetch("https://agenteia-xzfd.onrender.com/messages/upload", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
                 body: formData
