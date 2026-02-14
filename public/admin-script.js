@@ -204,6 +204,7 @@ async function carregarListaClientes() {
     } catch (error) { console.error("Erro lista:", error); }
 }
 
+
 async function carregarMensagens(clienteId) {
     if (!clienteId) return;
     try {
