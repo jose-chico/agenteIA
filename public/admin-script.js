@@ -197,6 +197,33 @@ async function carregarListaClientes() {
                     
                     carregarMensagens(cliente.id);
                 };
+                item.ondblclick = async (e) => {  
+    e.stopPropagation(); // Evita que o clique simples também dispare  
+      
+    if (!confirm(`Deseja realmente deletar o cliente ${cliente.name || cliente.email}?`)) {  
+        return;  
+    }  
+      
+    try {  
+        const response = await fetch(`https://agenteia-1.onrender.com/clientes/${cliente.id}`, {  
+            method: "DELETE",  
+            headers: { "Authorization": `Bearer ${token}` }  
+        });  
+          
+        if (response.ok) {  
+            showToast("Cliente deletado com sucesso!", "success");  
+            item.remove(); // Remove da UI  
+            // Atualiza a lista  
+            carregarListaClientes();  
+        } else {  
+            const error = await response.json();  
+            showToast(error.error || "Erro ao deletar cliente", "error");  
+        }  
+    } catch (error) {  
+        console.error("Erro ao deletar:", error);  
+        showToast("Erro ao deletar cliente", "error");  
+    }  
+};
                 clientListDiv.appendChild(item);
             });
         }
