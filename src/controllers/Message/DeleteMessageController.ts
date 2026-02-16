@@ -13,19 +13,27 @@ export const DeleteMessageController = async (req: Request, res: Response) => {
         }
         
         const userId = Number(authUserId);
+        const messageId = Number(id);
 
         const messageExists = await prisma.message.findUnique({
-            where: { id: Number(id) }
+            where: { id: messageId }
         });
 
         if (!messageExists) {
             return res.status(404).json({ error: "Mensagem não encontrada." });
         }
 
+        // Validar permissão: usuário só pode deletar suas próprias mensagens
+        const isOwner = messageExists.usuarioId === userId;
+        
+        if (!isOwner) {
+            return res.status(403).json({ error: "Você não tem permissão para deletar esta mensagem." });
+        }
+
         if (mode === "TODOS") {
             // Apaga o registro do banco de dados definitivamente
             await prisma.message.delete({
-                where: { id: Number(id) }
+                where: { id: messageId }
             });
 
             const io = getIO(); // Obtém a instância do socket
@@ -36,12 +44,12 @@ export const DeleteMessageController = async (req: Request, res: Response) => {
             }
             io.to("admin").emit("messageDeleted", { id: messageExists.id });
 
-            return res.json({ message: "Mensagem apagada para todos!", mode: "TODOS", id });
+            return res.json({ message: "Mensagem apagada para todos!", mode: "TODOS", id: messageId });
         } else {
             // No "Apagar para mim", adicionamos o ID do usuário na lista de "deletedBy"
             // Isso persiste a exclusão para este usuário específico sem afetar os outros
             await prisma.message.update({
-                where: { id: Number(id) },
+                where: { id: messageId },
                 data: {
                     deletedBy: {
                         push: userId
@@ -49,7 +57,7 @@ export const DeleteMessageController = async (req: Request, res: Response) => {
                 }
             });
 
-            return res.json({ message: "Mensagem removida da sua visualização.", mode: "MIM", id });
+            return res.json({ message: "Mensagem removida da sua visualização.", mode: "MIM", id: messageId });
         }
     } catch (error) {
         console.error("Erro ao deletar mensagem:", error);
