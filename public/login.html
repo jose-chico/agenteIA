@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
+    <meta name="mobile-web-app-capable" content="yes">  
+    <meta name="apple-mobile-web-app-capable" content="yes">  
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Login - Chat Suporte</title>
+    <link rel="stylesheet" href="login-style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Bem-vindo</h2>
+            <p>Identifique-se para iniciar o chat</p>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Nome ou E-mail</label>
+                    <input type="text" id="username" placeholder="Ex: João Silva" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+
+                <div style="text-align: right; margin-bottom: 20px;">
+    <a href="forgot-password.html" style="font-size: 12px; color: #075e54; text-decoration: none;">Esqueceu a senha?</a>
+</div>
+
+                <button type="submit" id="login-btn">Entrar no Chat</button>
+                <p style="margin-top: 20px; font-size: 13px;">
+    Não tem conta? <a href="cadastro.html" style="color: #075e54; font-weight: bold; text-decoration: none;">Cadastre-se</a>
+</p>
+            </form>
+            <div id="error-msg" class="error"></div>
+        </div>
+    </div>
+
+    <script src="login-script.js"></script>
+</body>
+</html>

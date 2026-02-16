@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cadastrar Cliente</title>
+  <style>
+    :root{ --bg:#0a0f0a; --card:#0f1710; --text:#ecfdf5; --muted:#b7f7ce; --accent:#34d399; --border:#1e2a1f; --input:#0d140e; --shadow:0 10px 30px rgba(0,0,0,.25); --danger:#ef4444; }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:system-ui,Segoe UI,Roboto; color:var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(52,211,153,.14), transparent 60%),
+                  radial-gradient(900px 700px at -10% 110%, rgba(16,185,129,.10), transparent 60%),
+                  linear-gradient(180deg,#081108,#0a0f0a);
+      min-height:100vh; display:grid; place-items:center; padding:24px; }
+    .shell{width:100%; max-width:680px}
+    .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+    .sp{flex:1}
+    .card{ background:linear-gradient(180deg,rgba(52,211,153,.06),transparent 40%), var(--card); border:1px solid var(--border); border-radius:18px; padding:22px; box-shadow:var(--shadow) }
+    h1{margin:0 0 12px}
+    .grid{display:grid; gap:12px}
+    .input{background:var(--input); border:1px solid var(--border); border-radius:12px; color:var(--text); padding:12px 14px; outline:none}
+    .input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(52,211,153,.12)}
+    .btn{background:var(--accent); border:1px solid transparent; color:#052e1a; font-weight:600; padding:12px 16px; border-radius:12px; cursor:pointer}
+    .btn-ghost{background:transparent; color:var(--text); border:1px solid var(--border)}
+    .btn-danger{background:var(--danger); color:#fff}
+    .btn[disabled]{opacity:.6; cursor:not-allowed}
+    .muted{color:var(--muted); font-size:14px}
+    .ok{color:#bbf7d0} .err{color:#fecaca}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="row" style="margin-bottom:14px">
+      <h1 style="margin:0">Cadastrar Cliente</h1>
+      <div class="sp"></div>
+      <a href="listar-clientes.html" class="btn btn-ghost" style="text-decoration:none;padding:10px 14px;border-radius:12px">Voltar</a>
+      <button id="btnSair" class="btn btn-danger" type="button">Sair</button>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <input id="consumidor" class="input" placeholder="Consumidor" />
+        <input id="nunerro" class="input" placeholder="Nunerro" />
+        <input id="datass" class="input" type="date" />
+        <button id="btnSalvar" class="btn" type="button" disabled>Cadastrar</button>
+        <div id="msg" class="muted"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const els = {
+      consumidor: document.getElementById('consumidor'),
+      nunerro: document.getElementById('nunerro'),
+      datass: document.getElementById('datass'),
+      btnSalvar: document.getElementById('btnSalvar'),
+      btnSair: document.getElementById('btnSair'),
+      msg: document.getElementById('msg'),
+    };
+
+    const API = (() => {
+      const saved = localStorage.getItem('apiBase');
+      if (saved) return saved.replace(/\/+$/, '');
+      const origin = window.location.origin;
+      if (origin && origin.startsWith('http')) return origin;
+      return 'https://agenteia-22ds.onrender.com';
+    })();
+
+    const TOKEN = localStorage.getItem('token');
+    if(!TOKEN) window.location.href = 'login.html';
+
+    function setMsg(text, cls=''){ els.msg.textContent = text || ''; els.msg.className = 'muted ' + cls; }
+    function canSubmit(){ return els.consumidor.value && els.nunerro.value && els.datass.value; }
+    function toggle(){ els.btnSalvar.disabled = !canSubmit(); }
+    [els.consumidor, els.nunerro, els.datass].forEach(i => {
+      i.addEventListener('input', toggle);
+      i.addEventListener('keydown', e => { if(e.key==='Enter' && !els.btnSalvar.disabled) els.btnSalvar.click(); });
+    });
+
+    els.btnSair.addEventListener('click', () => { localStorage.removeItem('token'); localStorage.removeItem('email'); window.location.href = 'login.html'; });
+
+    function msgErro(d,f='Erro'){ if(!d) return f; if(Array.isArray(d)&&d[0]?.message) return d.map(i=>i.message).join(' | '); return d.message||f; }
+
+    els.btnSalvar.addEventListener('click', async () => {
+      if (!canSubmit()) return;
+      setMsg('Enviando...'); els.btnSalvar.disabled = true;
+      try{
+        const res = await fetch(API + '/cliente', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+TOKEN },
+          body: JSON.stringify({ consumidor: els.consumidor.value.trim(), nunerro: els.nunerro.value.trim(), datass: els.datass.value })
+        });
+        const data = await res.json().catch(()=>({}));
+        if(res.status === 401){ setMsg('Não autorizado. Faça login novamente.', 'err'); setTimeout(()=> window.location.href='login.html', 900); return; }
+        if(res.status === 409){ setMsg(data?.message || 'Valor já existente para campo único.', 'err'); return; }
+        if(!res.ok) throw new Error(msgErro(data, 'Falha ao cadastrar'));
+        setMsg('Cliente cadastrado com sucesso! Redirecionando...', 'ok');
+        els.consumidor.value=''; els.nunerro.value=''; els.datass.value='';
+        setTimeout(()=> window.location.href='listar-clientes.html', 800);
+      }catch(err){ setMsg(err.message || 'Erro', 'err'); }
+      finally{ toggle(); }
+    });
+
+    toggle();
+  </script>
+</body>
+</html>

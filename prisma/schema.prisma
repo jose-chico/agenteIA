@@ -1,0 +1,111 @@
+// Configuração do Cliente Prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Conexão com o Banco (PostgreSQL)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Tabela de Usuários (Admins/Donos do Chat)
+model User {
+  id                   Int                  @id @default(autoincrement())
+  name                 String
+  email                String               @unique
+  phone                String?
+  password             String
+  
+  // Campos para o Stripe (Premium)
+  stripeCustomerId     String?              @unique
+  isPremium            Boolean              @default(false)
+  
+  // Relacionamento com tokens de reset
+  resetTokens          PasswordResetToken[]
+
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  // Relacionamentos
+  clientes             Cliente[]
+  messages             Message[]
+}
+
+// 2. Tabela de Clientes (Contatos do Chat)
+model Cliente {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  email     String?
+  telefone  String?
+  status    String    @default("Ativo")
+  
+  usuarioId Int
+  usuario   User      @relation(fields: [usuarioId], references: [id])
+
+  messages  Message[]
+  pushSubscriptions PushSubscription[]
+  createdAt DateTime  @default(now())
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  endpoint  String   @unique
+  keys      Json
+  createdAt DateTime @default(now())
+  
+  clienteId Int
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+}
+
+// 3. Tabela de Mensagens
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String   @db.Text
+  type       String   @default("text")
+  senderType String   // "ADMIN" ou "CLIENTE"
+  
+  // Controle de exclusão individual
+  deletedBy  Int[]    @default([])
+
+  // Status de leitura
+  isRead     Boolean  @default(false)
+  readAt     DateTime?
+  
+  usuarioId  Int
+  usuario    User     @relation(fields: [usuarioId], references: [id])
+  
+  clienteId  Int
+  cliente    Cliente  @relation(fields: [clienteId], references: [id])
+
+  createdAt  DateTime @default(now())
+}
+
+// 4. Tabela para Tokens de Recuperação de Senha
+model PasswordResetToken {
+  id          Int       @id @default(autoincrement())
+  tokenHash   String    @unique
+  email       String    // E-mail de quem solicitou (ajuda na validação rápida)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  
+  usuarioId   Int
+  user        User      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+// 5. Tabela de Pagamentos (Sincronizada com StripeWebhookController)
+model Payment {
+  id              Int      @id @default(autoincrement())
+  stripePaymentId String?  @unique
+  stripeSessionId String?  @unique
+  amount          Float
+  currency        String   @default("BRL")
+  status          String
+  customerEmail   String?
+  customerName    String?
+  paymentMethod   String?  // O CAMPO QUE ESTAVA FALTANDO!
+  products        Json?    // Detalhes do que foi comprado
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
+}

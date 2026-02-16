@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperar Senha</title>
+    <link rel="stylesheet" href="login-style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Recuperar Senha</h2>
+            <p>Digite seu e-mail para receber o link de redefinição.</p>
+            
+            <form id="recover-form">
+                <div class="input-group">
+                    <label>E-mail cadastrado</label>
+                    <input type="email" id="recover-email" placeholder="seu@email.com" required>
+                </div>
+                <button type="submit" id="recover-btn">Enviar Link</button>
+            </form>
+            
+            <p id="feedback-msg" style="margin-top: 20px; font-size: 13px; display: none;"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('recover-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const emailInput = document.getElementById('recover-email').value;
+            const feedback = document.getElementById('feedback-msg');
+            const btn = document.getElementById('recover-btn');
+
+            // Prepara a interface
+            btn.disabled = true;
+            btn.innerText = "Enviando...";
+            feedback.style.display = 'none';
+
+            try {
+                // CHAMADA REAL PARA O SEU SERVIDOR
+                const response = await fetch('https://agenteia-22ds.onrender.com/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailInput })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    feedback.style.color = "#075e54";
+                    feedback.innerHTML = "✅ Solicitação processada! <br><b>Abra o terminal do VS Code para copiar o link.</b>";
+                    feedback.style.display = 'block';
+                } else {
+                    feedback.style.color = "red";
+                    feedback.innerText = "❌ Erro: " + (data.message || "E-mail não encontrado.");
+                    feedback.style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Erro:", error);
+                alert("Erro ao conectar com o servidor. Verifique se o Node.js está rodando (npm run dev).");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Enviar Link";
+            }
+        });
+    </script>
+</body>
+</html>

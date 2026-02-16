@@ -1,0 +1,114 @@
+/* Configurações Gerais */
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+}
+
+body { 
+    background-color: #cfd8dc; /* Cinza azulado suave do fundo do chat */
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    color: #37474f;
+}
+
+/* Container Principal */
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.login-box {
+    background: #ffffff;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+/* Títulos e Textos */
+h2 {
+    color: #263238;
+    margin-bottom: 10px;
+    font-size: 26px;
+}
+
+p {
+    color: #78909c;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+/* Formulário e Inputs */
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    font-size: 13px;
+    color: #546e7a;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #cfd8dc;
+    background: #f8f9fa;
+    border-radius: 8px;
+    outline: none;
+    color: #37474f;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: #0288d1; /* Azul Safira */
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.1);
+}
+
+/* Botões (Estilo Profissional) */
+button {
+    width: 100%;
+    padding: 14px;
+    background: #0288d1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #01579b;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(2, 136, 209, 0.3);
+}
+
+/* Links */
+a {
+    color: #0288d1 !important; /* Forçando o azul profissional */
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Mensagens de Erro */
+.error {
+    color: #ef5350;
+    font-size: 13px;
+    margin-top: 15px;
+    min-height: 18px;
+}

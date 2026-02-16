@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">`n    <meta name="mobile-web-app-capable" content="yes">`n    <meta name="apple-mobile-web-app-capable" content="yes">`n    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Cadastro - Chat Suporte</title>
+    <link rel="stylesheet" href="login-style.css"> </head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Criar Conta</h2>
+            <p>Preencha os dados para acessar o suporte</p>
+            
+            <form id="cadastro-form">
+                <div class="input-group">
+                    <label for="new-username">Nome Completo</label>
+                    <input type="text" id="new-username" placeholder="Seu nome" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" placeholder="seu@email.com" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="phone">Telefone</label>
+                    <input type="tel" id="phone" placeholder="(00) 00000-0000" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="new-password">Senha</label>
+                    <input type="password" id="new-password" placeholder="Crie uma senha" required>
+                </div>
+
+                <button type="submit" id="cadastro-btn">Finalizar Cadastro</button>
+            </form>
+            <p style="margin-top: 20px; font-size: 13px;">
+                Já tem conta? <a href="login.html" style="color: #075e54; font-weight: bold; text-decoration: none;">Faça Login</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="cadastro-script.js"></script>
+</body>
+</html>

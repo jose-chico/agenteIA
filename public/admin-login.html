@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Login 👑 - Painel Administrativo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+            top: -250px;
+            right: -250px;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            bottom: -200px;
+            left: -200px;
+            animation: pulse 6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .admin-login-container {
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .admin-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 45px 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .admin-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .admin-header h1 {
+            font-size: 28px;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .admin-header p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 18px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 16px 15px 45px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-admin-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-top: 10px;
+        }
+
+        .btn-admin-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-admin-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-admin-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: #e5e7eb;
+            top: 50%;
+            left: 0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            color: #9ca3af;
+            font-size: 13px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .client-login-link {
+            text-align: center;
+            padding: 15px;
+            background: #f3f4f6;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .client-login-link:hover {
+            background: #e5e7eb;
+        }
+
+        .client-login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+
+        .toast.success { background: #10b981; color: white; }
+        .toast.error { background: #ef4444; color: white; }
+        .toast.info { background: #3b82f6; color: white; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        @media (max-width: 480px) {
+            .admin-card {
+                padding: 35px 30px;
+            }
+
+            .admin-header h1 {
+                font-size: 24px;
+            }
+
+            .admin-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="admin-card">
+            <div class="admin-header">
+                <div class="admin-icon">👑</div>
+                <h1>Painel Administrativo</h1>
+                <p>Acesso restrito a administradores</p>
+                <span class="security-badge">🔒 Área Segura</span>
+            </div>
+
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label for="email">E-mail do Administrador</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉️</span>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="admin@empresa.com"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔑</span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="••••••••"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-admin-login" id="login-btn">
+                    Acessar Painel
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>ou</span>
+            </div>
+
+            <div class="client-login-link">
+                <a href="login.html">
+                    <span>👤</span>
+                    <span>Área do Cliente</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        const form = document.getElementById('admin-login-form');
+        const loginBtn = document.getElementById('login-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = '';
+            if (type === 'success') icon = '✅';
+            else if (type === 'error') icon = '❌';
+            else icon = 'ℹ️';
+
+            toast.innerHTML = `<span style="font-size: 1.2em;">${icon}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email || !password) {
+                showToast('Por favor, preencha todos os campos.', 'error');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Verificando...';
+
+            try {
+                const response = await fetch('https://agenteia-22ds.onrender.com/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    showToast('✅ Login realizado com sucesso!', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1000);
+                } else {
+                    showToast(data.error || 'Credenciais inválidas', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro de conexão. Tente novamente.', 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Acessar Painel';
+            }
+        });
+    </script>
+</body>
+</html>

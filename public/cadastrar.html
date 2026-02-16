@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cadastrar Usuário</title>
+  <style>
+    :root{ --bg:#0a0f0a; --card:#0f1710; --text:#ecfdf5; --muted:#b7f7ce;
+      --accent:#34d399; --border:#1e2a1f; --input:#0d140e; --shadow:0 10px 30px rgba(0,0,0,.25);}
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,Segoe UI,Roboto; color:var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(52,211,153,.14), transparent 60%),
+                  radial-gradient(900px 700px at -10% 110%, rgba(16,185,129,.10), transparent 60%),
+                  linear-gradient(180deg,#081108,#0a0f0a);
+      min-height:100vh; display:grid; place-items:center;
+    }
+    .card{width:100%; max-width:420px; background:linear-gradient(180deg,rgba(52,211,153,.06),transparent 40%), var(--card);
+      border:1px solid var(--border); border-radius:18px; padding:22px; box-shadow:var(--shadow)}
+    h1{margin:0 0 10px}
+    .grid{display:grid; gap:12px}
+    .input{background:var(--input); border:1px solid var(--border); border-radius:12px; color:var(--text); padding:12px 14px; outline:none}
+    .input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(52,211,153,.12)}
+    .btn{background:var(--accent); border:1px solid transparent; color:#052e1a; font-weight:600; padding:12px 16px; border-radius:12px; cursor:pointer}
+    .btn[disabled]{opacity:.6; cursor:not-allowed}
+    .muted{color:var(--muted); font-size:14px}
+    .success{color:#bbf7d0}
+    .error{color:#fecaca}
+    a{color:#86efac; text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Criar conta</h1>
+    <div class="grid">
+      <input id="email" class="input" type="email" placeholder="Email" autocomplete="email" />
+      <input id="senha" class="input" type="password" placeholder="Senha (mín. 6)" autocomplete="new-password" />
+      <button id="btnCadastrar" class="btn" type="button" disabled>Cadastrar</button>
+      <div id="msg" class="muted"></div>
+      <div class="muted">Já tem conta? <a href="login.html">Entrar</a></div>
+    </div>
+  </div>
+
+  <script>
+    const els = { email: email, senha: senha, btnCadastrar: btnCadastrar, msg: msg };
+
+    const API = (() => {
+      const saved = localStorage.getItem('apiBase');
+      if (saved) return saved.replace(/\/+$/, '');
+      const origin = window.location.origin;
+      if (origin && origin.startsWith('http')) return origin;
+      return 'https://agenteia-22ds.onrender.com';
+    })();
+
+    const pre = localStorage.getItem('emailParaCadastro');
+    if (pre) { els.email.value = pre; localStorage.removeItem('emailParaCadastro'); }
+
+    function setMsg(t, type){ msg.textContent=t||''; msg.className='muted '+(type||''); }
+    function canSubmit(){ return els.email.value && els.senha.value && els.senha.value.length>=6; }
+    function toggle(){ els.btnCadastrar.disabled = !canSubmit(); }
+    [els.email, els.senha].forEach(i => {
+      i.addEventListener('input', toggle);
+      i.addEventListener('keydown', e => { if(e.key==='Enter' && !els.btnCadastrar.disabled) els.btnCadastrar.click(); });
+    });
+
+    function msgErro(d,f='Erro'){ if(!d) return f; if(Array.isArray(d)&&d[0]?.message) return d.map(i=>i.message).join(' | '); return d.message||f; }
+
+    // CADASTRO -> envia { email, senha }
+    els.btnCadastrar.addEventListener('click', async () => {
+      if (!canSubmit()) return;
+      setMsg('Enviando...');
+      els.btnCadastrar.disabled = true;
+      try{
+        const res = await fetch(API + '/usuario', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ email: els.email.value, senha: els.senha.value })
+        });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(msgErro(data, 'Falha ao cadastrar'));
+        setMsg('Usuário cadastrado! Redirecionando para o login...', 'success');
+        setTimeout(()=>{ window.location.href='login.html'; }, 800);
+      }catch(err){
+        setMsg(err.message || 'Erro', 'error');
+      }finally{
+        toggle();
+      }
+    });
+
+    toggle();
+  </script>
+</body>
+</html>

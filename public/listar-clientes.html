@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Listar Clientes</title>
+  <style>
+    :root{ --bg:#0a0f0a; --card:#0f1710; --text:#ecfdf5; --muted:#b7f7ce;
+      --accent:#34d399; --border:#1e2a1f; --input:#0d140e; --shadow:0 10px 30px rgba(0,0,0,.25); --danger:#ef4444; }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:system-ui,Segoe UI,Roboto; color:var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(52,211,153,.14), transparent 60%),
+                 radial-gradient(900px 700px at -10% 110%, rgba(16,185,129,.10), transparent 60%),
+                 linear-gradient(180deg,#081108,#0a0f0a); }
+    .wrap{max-width:1100px; margin:0 auto; padding:24px;}
+    .card{background:linear-gradient(180deg,rgba(52,211,153,.06),transparent 40%), var(--card); border:1px solid var(--border); border-radius:18px; padding:18px; box-shadow:var(--shadow)}
+    h1{margin:0 0 12px; text-align:center}
+    .top-actions{ display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:nowrap; margin:10px 0 18px; }
+    .btn{ background:var(--accent); border:1px solid transparent; color:#052e1a; font-weight:700; padding:10px 16px; border-radius:12px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:transform .18s ease, filter .18s ease, box-shadow .18s ease; box-shadow:0 6px 16px rgba(0,0,0,.2); }
+    .btn:hover{ filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 10px 22px rgba(0,0,0,.28) }
+    .btn:active{ transform:translateY(0) }
+    .btn-ghost{ background:transparent; color:var(--text); border:1px solid var(--border) }
+    .btn-danger{ background:var(--danger); color:#fff }
+    .btn[disabled]{opacity:.5; cursor:not-allowed}
+    .muted{color:var(--muted); font-size:14px}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+    .sp{flex:1}
+    .input{background:var(--input); border:1px solid var(--border); border-radius:12px; color:var(--text); padding:10px 12px; outline:none}
+    .input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(52,211,153,.12)}
+    table{width:100%; border-collapse:collapse; border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-top:12px}
+    thead{background:#0d140e}
+    th,td{padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; font-size:14px}
+    tbody tr:hover{background:rgba(52,211,153,.06)}
+    .actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+    .ok{color:#bbf7d0} .err{color:#fecaca}
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+    .modal{ width:100%; max-width:520px; background:linear-gradient(180deg,rgba(52,211,153,.06),transparent 40%), var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); padding:18px }
+    .modal h2{margin:0 0 10px; text-align:center}
+    .modal .grid{display:grid; gap:12px}
+    .modal .footer{display:flex; gap:10px; justify-content:flex-end; margin-top:8px}
+    .cards{ display:none; gap:12px; margin-top:12px; }
+    .card-item{ background:linear-gradient(180deg,rgba(52,211,153,.06),transparent 40%), var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:var(--shadow); text-align:center; transition:transform .2s ease, box-shadow .2s ease; }
+    .card-item:hover{ transform:translateY(-4px) scale(1.02); box-shadow:0 12px 24px rgba(0,0,0,.35) }
+    .card-item .title{ font-weight:800; font-size:18px; margin-bottom:8px; color:var(--accent); letter-spacing:.2px; }
+    .card-item .meta{ font-size:15px; color:var(--text); margin:4px 0; }
+    .card-item .meta strong{ color:var(--muted) }
+    .card-item .actions{ margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap }
+    @media (max-width: 640px){ table{ display:none; } .cards{ display:grid; grid-template-columns:1fr; } }
+    @media (min-width: 641px) and (max-width: 1024px){ table{ display:none; } .cards{ display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Clientes</h1>
+
+    <div class="top-actions">
+      <button id="btnRecarregar" class="btn" type="button">⟳ Recarregar</button>
+      <a href="cadastrar-cliente.html" class="btn">✚ Cadastrar cliente</a>
+      <button id="btnSair" class="btn btn-danger" type="button">⟵ Sair</button>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="row" style="margin-bottom:10px">
+        <input id="fCons" class="input" placeholder="Filtrar por consumidor"/>
+        <input id="fNun" class="input" placeholder="Filtrar por nunerro"/>
+        <div class="sp"></div>
+      </div>
+
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Consumidor</th>
+              <th>Nunerro</th>
+              <th>Datass</th>
+              <th style="width:220px">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="cards" class="cards" aria-live="polite"></div>
+      <div id="msg" class="muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <h2>Editar cliente</h2>
+      <div class="grid">
+        <input id="mConsumidor" class="input" placeholder="Consumidor" />
+        <input id="mNunerro" class="input" placeholder="Nunerro" />
+        <input id="mDatass" class="input" type="date" />
+        <div id="mMsg" class="muted"></div>
+      </div>
+      <div class="footer">
+        <button id="mCancelar" class="btn btn-ghost" type="button">Cancelar</button>
+        <button id="mSalvar" class="btn" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if(!localStorage.getItem('token')) window.location.href = 'login.html';
+
+    const els = {
+      btnRecarregar: document.getElementById('btnRecarregar'),
+      btnSair: document.getElementById('btnSair'),
+      msg: document.getElementById('msg'),
+      tbody: document.getElementById('tbody'),
+      cards: document.getElementById('cards'),
+      fCons: document.getElementById('fCons'),
+      fNun: document.getElementById('fNun'),
+      backdrop: document.getElementById('backdrop'),
+      mConsumidor: document.getElementById('mConsumidor'),
+      mNunerro: document.getElementById('mNunerro'),
+      mDatass: document.getElementById('mDatass'),
+      mMsg: document.getElementById('mMsg'),
+      mCancelar: document.getElementById('mCancelar'),
+      mSalvar: document.getElementById('mSalvar'),
+    };
+
+    const API = (() => {
+      const saved = localStorage.getItem('apiBase');
+      if (saved) return saved.replace(/\/+$/, '');
+      const origin = window.location.origin;
+      if (origin && origin.startsWith('http')) return origin;
+      return 'https://agenteia-22ds.onrender.com';
+    })();
+
+    function setMsg(t, cls=''){ els.msg.textContent = t || ''; els.msg.className = 'muted ' + cls; }
+    function setModalMsg(t, cls=''){ els.mMsg.textContent = t || ''; els.mMsg.className = 'muted ' + cls; }
+    function authHeader(){ const t = localStorage.getItem('token'); return t ? { Authorization: 'Bearer ' + t } : {}; }
+
+    let clientes = [];
+    let consumidorOld = null;
+
+    async function carregar(){
+      setMsg('Carregando...');
+      try{
+        const res = await fetch(API + '/clientes', { headers: { ...authHeader() } });
+        const data = await res.json().catch(()=>({}));
+        if(res.status === 401){ setMsg('Sessão expirada. Faça login novamente.', 'err'); setTimeout(()=> window.location.href = 'login.html', 900); return; }
+        if(!res.ok) throw new Error((data && data.message) || 'Erro ao listar');
+        clientes = Array.isArray(data) ? data : (data.cliente || []);
+        render(); setMsg('');
+      }catch(e){ setMsg(e.message || 'Erro', 'err'); }
+    }
+
+    function fmtData(v){ if(!v) return ''; const d=new Date(v); return isNaN(d)?String(v):d.toLocaleDateString('pt-BR'); }
+    function toISODate(v){ if(!v) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v); return m?`${m[3]}-${m[2]}-${m[1]}`:v; }
+
+    function render(){
+      const f1 = els.fCons.value.trim().toLowerCase();
+      const f2 = els.fNun.value.trim().toLowerCase();
+      const list = clientes.filter(c =>
+        (!f1 || String(c.consumidor||'').toLowerCase().includes(f1)) &&
+        (!f2 || String(c.nunerro||'').toLowerCase().includes(f2))
+      );
+
+      els.tbody.innerHTML = '';
+      if(!list.length){
+        const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=4; td.className='muted'; td.textContent='Sem resultados'; tr.appendChild(td); els.tbody.appendChild(tr);
+      }else{
+        for(const c of list){
+          const tr=document.createElement('tr');
+          tr.innerHTML = `
+            <td>${escapeHtml(c.consumidor)}</td>
+            <td>${escapeHtml(c.nunerro)}</td>
+            <td>${escapeHtml(fmtData(c.datass))}</td>
+            <td class="actions">
+              <button class="btn btn-ghost" type="button" data-editar="${encodeURIComponent(c.consumidor)}">Editar</button>
+              <button class="btn btn-danger" type="button" data-remover="${encodeURIComponent(c.consumidor)}">Excluir</button>
+            </td>`;
+          els.tbody.appendChild(tr);
+        }
+      }
+
+      els.cards.innerHTML = '';
+      if(!list.length){
+        const empty=document.createElement('div'); empty.className='muted'; empty.textContent='Sem resultados'; els.cards.appendChild(empty);
+      }else{
+        for(const c of list){
+          const div=document.createElement('div');
+          div.className='card-item';
+          div.innerHTML = `
+            <div class="title">${escapeHtml(c.consumidor)}</div>
+            <div class="meta"><strong>Nunerro:</strong> ${escapeHtml(c.nunerro)}</div>
+            <div class="meta"><strong>Datass:</strong> ${escapeHtml(fmtData(c.datass))}</div>
+            <div class="actions">
+              <button class="btn btn-ghost" type="button" data-editar="${encodeURIComponent(c.consumidor)}">Editar</button>
+              <button class="btn btn-danger" type="button" data-remover="${encodeURIComponent(c.consumidor)}">Excluir</button>
+            </div>`;
+          els.cards.appendChild(div);
+        }
+      }
+    }
+
+    function escapeHtml(v){ if(v==null) return ''; return String(v).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[s] )); }
+
+    function openModal(c){
+      consumidorOld = c.consumidor;
+      els.mConsumidor.value = c.consumidor || '';
+      els.mNunerro.value = c.nunerro || '';
+      const iso = toISODate(c.datass);
+      els.mDatass.value = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : '';
+      setModalMsg(''); els.backdrop.style.display = 'flex'; setTimeout(()=> els.mConsumidor.focus(), 0);
+    }
+    function closeModal(){ els.backdrop.style.display = 'none'; consumidorOld = null; }
+
+    document.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+
+      if(btn.dataset.remover){
+        const consumidor = decodeURIComponent(btn.dataset.remover);
+        if(!confirm(`Excluir cliente "${consumidor}"?`)) return;
+        try{
+          setMsg('Excluindo...');
+          const res = await fetch(API + '/cliente/' + encodeURIComponent(consumidor), { method:'DELETE', headers:{ ...authHeader() } });
+          const data = await res.json().catch(()=>({}));
+          if(res.status === 404){ setMsg('Consumidor não encontrado.', 'err'); return; }
+          if(res.status === 401){ setMsg('Sessão expirada.', 'err'); setTimeout(()=>window.location.href='login.html',800); return; }
+          if(!res.ok) throw new Error(data?.message || 'Erro ao excluir');
+          setMsg('Cliente deletado com sucesso!', 'ok'); await carregar();
+        }catch(err){ setMsg(err.message || 'Erro', 'err'); }
+      }
+
+      if(btn.dataset.editar){
+        const consumidor = decodeURIComponent(btn.dataset.editar);
+        const c = clientes.find(x => x.consumidor === consumidor);
+        if(c) openModal(c);
+      }
+
+      if(btn.id === 'mCancelar') closeModal();
+    });
+
+    els.backdrop.addEventListener('click', (e)=>{ if(e.target === els.backdrop) closeModal(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && els.backdrop.style.display === 'flex') closeModal(); });
+
+    els.mSalvar.addEventListener('click', async ()=>{
+      if(!consumidorOld) return;
+      const body = { consumidor: els.mConsumidor.value.trim(), nunerro: els.mNunerro.value.trim(), datass: els.mDatass.value };
+      Object.keys(body).forEach(k => { if(!body[k]) delete body[k]; });
+      if(Object.keys(body).length === 0){ setModalMsg('Informe ao menos um campo para atualizar.', 'err'); return; }
+
+      try{
+        els.mSalvar.disabled = true; setModalMsg('Salvando...');
+        const res = await fetch(API + '/cliente/' + encodeURIComponent(consumidorOld), {
+          method:'PUT', headers:{ 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(()=>({}));
+        if(res.status === 404){ setModalMsg('Consumidor não encontrado.', 'err'); return; }
+        if(res.status === 409){ setModalMsg('Valor já existente para campo único.', 'err'); return; }
+        if(res.status === 401){ setModalMsg('Sessão expirada.', 'err'); setTimeout(()=>window.location.href='login.html',800); return; }
+        if(!res.ok){ if(Array.isArray(data) && data[0]?.message){ setModalMsg(data.map(i=>i.message).join(' | '), 'err'); return; } setModalMsg(data?.message || 'Erro ao atualizar', 'err'); return; }
+        setModalMsg('Atualizado com sucesso!', 'ok'); closeModal(); await carregar();
+      }catch(err){ setModalMsg((err && err.message) || 'Erro', 'err'); }
+      finally{ els.mSalvar.disabled = false; }
+    });
+
+    els.btnRecarregar.addEventListener('click', carregar);
+    els.fCons.addEventListener('input', render);
+    els.fNun.addEventListener('input', render);
+    els.btnSair.addEventListener('click', () => { localStorage.removeItem('token'); localStorage.removeItem('email'); window.location.href = 'login.html'; });
+
+    carregar();
+  </script>
+</body>
+</html>

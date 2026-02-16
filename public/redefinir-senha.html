@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
+    <meta name="mobile-web-app-capable" content="yes">  
+    <meta name="apple-mobile-web-app-capable" content="yes">  
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Nova Senha - Chat Suporte</title>
+    <link rel="stylesheet" href="login-style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Nova Senha</h2>
+            <p>Crie uma senha forte e segura para sua conta.</p>
+            
+            <form id="reset-form">
+                <div class="input-group">
+                    <label for="new-pass">Nova Senha</label>
+                    <input type="password" id="new-pass" placeholder="Mínimo 4 caracteres" required minlength="4">
+                </div>
+                <div class="input-group">
+                    <label for="confirm-pass">Confirmar Nova Senha</label>
+                    <input type="password" id="confirm-pass" placeholder="Repita a senha" required minlength="4">
+                </div>
+                <button type="submit" id="save-pass-btn">Salvar Nova Senha</button>
+            </form>
+            
+            <p style="margin-top: 20px; font-size: 13px;">
+                Lembrou a senha? <a href="login.html" style="color: #075e54; font-weight: bold; text-decoration: none;">Voltar ao Login</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('reset-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // 1. Pega o token da URL (ex: ?token=abc123...)
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                alert("Token de recuperação não encontrado! Solicite um novo e-mail.");
+                return;
+            }
+
+            const password = document.getElementById('new-pass').value;
+            const confirmPass = document.getElementById('confirm-pass').value;
+
+            if (password !== confirmPass) {
+                alert("As senhas não coincidem!");
+                return;
+            }
+
+            try {
+                // 2. Aponta para a porta 8000 do seu BACKEND
+                const response = await fetch("https://agenteia-22ds.onrender.com/reset-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    // Envia 'token' e 'password' conforme o seu Controller espera
+                    body: JSON.stringify({ token, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("Sucesso! Sua senha foi alterada.");
+                    window.location.href = 'login.html';
+                } else {
+                    // Exibe a mensagem de erro vinda do seu ResetPasswordController
+                    alert(data.message || "Erro ao redefinir senha.");
+                }
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+                alert("Erro ao conectar com o servidor. Verifique se o backend está rodando na porta 8000.");
+            }
+        });
+    </script>
+</body>
+</html>
