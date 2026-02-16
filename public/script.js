@@ -95,7 +95,7 @@ window.handleDeleteClient = async function (msgId, mode) {
 
 async function executeDelete(msgId, mode) {
     try {
-        const response = await fetch("/messages/${msgId}", {
+        const response = await fetch(`/messages/${msgId}`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -479,7 +479,7 @@ const publicVapidKey = "BJJ8fren03WaYXm6588uhXgUDgLXEQj-qHdUDRB9EcSC1wzEl5k5qWjv
 function urlBase64ToUint8Array(base64String) {
     const padding = "=".repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
-        .replace(/\-/g, "+")
+        .replace(/-/g, "+")
         .replace(/_/g, "/");
 
     const rawData = window.atob(base64);
