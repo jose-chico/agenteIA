@@ -439,6 +439,7 @@ if (logoutBtn) {
 }
 
 // Função para inserir emoji no input
+// eslint-disable-next-line no-unused-vars
 function insertEmoji(emoji) {
     const input = document.getElementById("messageInput");
     if (input) {
@@ -452,6 +453,7 @@ function insertEmoji(emoji) {
 }
 
 // Função para mostrar/esconder o picker de emojis
+// eslint-disable-next-line no-unused-vars
 function toggleEmojiPicker(type) {
     const emojiBar = document.getElementById(`emoji-bar-${type}`);
     if (emojiBar) {
