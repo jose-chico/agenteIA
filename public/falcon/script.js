@@ -1,20 +1,19 @@
 // Menu Hamburger Mobile
 const hamburger = document.getElementById("hamburger");
-const navLinks = document.getElementById("navLinks");
 
 if (hamburger) {
+    const navLinks = document.getElementById("navLinks");
+    
     hamburger.addEventListener("click", function() {
         hamburger.classList.toggle("active");
-        navLinks.classList.toggle("active");
+        navLinks?.classList.toggle("active");
     });
-}
 
-// Fechar menu ao clicar em um link
-if (navLinks) {
-    navLinks.querySelectorAll("a").forEach(link => {
+    // Fechar menu ao clicar em um link
+    navLinks?.querySelectorAll("a").forEach(link => {
         link.addEventListener("click", function() {
             hamburger.classList.remove("active");
-            navLinks.classList.remove("active");
+            navLinks?.classList.remove("active");
         });
     });
 }
@@ -111,7 +110,7 @@ document.addEventListener("keydown", (e) => {
 // Monitor iframe for successful redirect to chat (auto-reload after login)
 if (embeddedChat) {
     let lastPath = "";
-    const monitorIframe = setInterval(() => {
+    setInterval(() => {
         try {
             const iframePath = embeddedChat.contentWindow.location.pathname;
             if (iframePath && iframePath !== lastPath) {
@@ -189,6 +188,7 @@ function handleMobileMenu() {
         // Adicione código para menu mobile
     }
 }
+
 
 window.addEventListener("resize", handleMobileMenu);
 handleMobileMenu();
