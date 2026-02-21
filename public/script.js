@@ -6,10 +6,16 @@ const attachBtn = document.querySelector(".attach-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const statusEscritaCliente = document.getElementById("status-escrita-cliente");
 const clientSound = document.getElementById("notification-sound-client");
+const paywallModal = document.getElementById("paywall-modal");
+const paywallMessage = document.getElementById("paywall-message");
+const paywallPayBtn = document.getElementById("paywall-pay-btn");
+const paywallRefreshBtn = document.getElementById("paywall-refresh-btn");
+const paywallLogoutBtn = document.getElementById("paywall-logout-btn");
 
 const token = localStorage.getItem("token");
 let meuId = null;
 let typingTimeout;
+let chatUnlocked = false;
 
 const socket = window.io(window.location.origin, {
     transports: ["websocket", "polling"],
@@ -76,6 +82,71 @@ function closeConfirmModal(event) {
     if (event && event.target.id !== "confirm-modal") return;
     const modal = document.getElementById("confirm-modal");
     if (modal) modal.style.display = "none";
+}
+
+function setChatDisabled(disabled) {
+    if (messageInput) messageInput.disabled = disabled;
+    if (btnEnviar) btnEnviar.disabled = disabled;
+    if (attachBtn) attachBtn.disabled = disabled;
+}
+
+function showPaywall(message, paymentUrl) {
+    setChatDisabled(true);
+    chatUnlocked = false;
+
+    if (paywallMessage) {
+        paywallMessage.innerText = message || "Para liberar o chat, finalize o pagamento no link abaixo.";
+    }
+
+    if (paywallPayBtn) {
+        const hasUrl = Boolean(paymentUrl);
+        paywallPayBtn.href = hasUrl ? paymentUrl : "#";
+        paywallPayBtn.style.opacity = hasUrl ? "1" : "0.6";
+        paywallPayBtn.style.pointerEvents = hasUrl ? "auto" : "none";
+    }
+
+    if (paywallModal) {
+        paywallModal.style.display = "flex";
+    }
+}
+
+function hidePaywall() {
+    if (paywallModal) paywallModal.style.display = "none";
+    chatUnlocked = true;
+    setChatDisabled(false);
+}
+
+async function checkPaymentAccess() {
+    if (!token) return false;
+
+    try {
+        const response = await fetch("/payments/access-status", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!checkAuth(response)) return false;
+
+        if (!response.ok) {
+            showPaywall("Não foi possível validar seu pagamento agora. Tente novamente em instantes.", null);
+            return false;
+        }
+
+        const data = await response.json();
+        if (data.isPremium) {
+            hidePaywall();
+            return true;
+        }
+
+        showPaywall(
+            "Para entrar no chat do Falcon, o pagamento precisa estar confirmado.",
+            data.paymentUrl || null
+        );
+        return false;
+    } catch (error) {
+        console.error("Erro ao verificar pagamento:", error);
+        showPaywall("Erro ao validar pagamento. Tente novamente.", null);
+        return false;
+    }
 }
 
 // --- FUNÇÃO PARA APAGAR MENSAGEM (REMODELADA) ---
@@ -324,7 +395,7 @@ function closeOptionsModal(event) {
 }
 
 async function sendMessage(content) {
-    if (!token || !content.trim()) return;
+    if (!token || !content.trim() || !chatUnlocked) return;
     socket.emit("typing", { clienteId: meuId, senderType: "CLIENTE", isTyping: false });
 
     try {
@@ -350,7 +421,7 @@ async function sendMessage(content) {
 async function marcarComoLida(messageIds) {
     if (!token || !messageIds || messageIds.length === 0) return;
     try {
-        const response = await fetch("/mark-read", {
+        const response = await fetch("/messages/mark-read", {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
@@ -392,7 +463,11 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "login.html";
         return;
     }
-    carregarMeuHistorico();
+    checkPaymentAccess().then((canAccess) => {
+        if (canAccess) {
+            carregarMeuHistorico();
+        }
+    });
 });
 
 if (btnEnviar) {
@@ -433,6 +508,25 @@ if (attachBtn && imageInputClient) {
 
 if (logoutBtn) {
     logoutBtn.onclick = () => {
+        localStorage.clear();
+        window.location.href = "login.html";
+    };
+}
+
+if (paywallRefreshBtn) {
+    paywallRefreshBtn.onclick = async () => {
+        const canAccess = await checkPaymentAccess();
+        if (canAccess) {
+            await carregarMeuHistorico();
+            showToast("Pagamento confirmado. Chat liberado!", "success");
+        } else {
+            showToast("Pagamento ainda não confirmado.", "info");
+        }
+    };
+}
+
+if (paywallLogoutBtn) {
+    paywallLogoutBtn.onclick = () => {
         localStorage.clear();
         window.location.href = "login.html";
     };

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento PIX - Falcon</title>
+    <style>
+        :root {
+            --bg: #0a0e27;
+            --card: #111736;
+            --text: #e8ecff;
+            --muted: #aab3d9;
+            --accent: #00ff88;
+            --accent-dark: #00cc6f;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(circle at 20% 10%, #1a2352, var(--bg));
+            color: var(--text);
+            font-family: Inter, Arial, sans-serif;
+        }
+        .card {
+            width: 100%;
+            max-width: 460px;
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+        h1 { margin: 0 0 8px; font-size: 1.45rem; }
+        p { margin: 0 0 14px; color: var(--muted); }
+        .qr-wrap {
+            display: flex;
+            justify-content: center;
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px;
+            margin: 16px 0;
+        }
+        .qr-wrap img {
+            width: 240px;
+            height: 240px;
+            object-fit: contain;
+        }
+        .label { font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
+        .box {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.25);
+            color: var(--text);
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+        .actions { display: grid; gap: 10px; margin-top: 8px; }
+        button, a.btn {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 14px;
+            background: var(--accent);
+            color: #052b18;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        button.secondary {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.25);
+            color: var(--text);
+            font-weight: 600;
+        }
+        button:hover, a.btn:hover { background: var(--accent-dark); }
+        #feedback { margin-top: 10px; color: var(--accent); font-size: 0.92rem; min-height: 18px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Pagamento via PIX</h1>
+        <p>Escaneie o QR Code ou copie a chave PIX para concluir o pagamento e liberar o chat.</p>
+        <p style="margin-top: -6px; color: #00ff88; font-weight: 700;">Valor: <span id="pix-amount-label">R$ 1,00</span></p>
+
+        <div class="qr-wrap">
+            <img id="pix-qr" alt="QR Code PIX">
+        </div>
+
+        <div class="label">Chave PIX</div>
+        <div class="box" id="pix-key-box">Carregando...</div>
+
+        <div class="label">PIX Copia e Cola</div>
+        <div class="box" id="pix-copy-paste-box">Gerando código...</div>
+
+        <div class="actions">
+            <button id="copy-key-btn">Copiar chave PIX</button>
+            <button id="copy-code-btn">Copiar PIX copia e cola</button>
+            <a class="btn secondary" href="/index.html">Voltar para o chat</a>
+        </div>
+
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        const pixQr = document.getElementById("pix-qr");
+        const pixKeyBox = document.getElementById("pix-key-box");
+        const pixCodeBox = document.getElementById("pix-copy-paste-box");
+        const copyKeyBtn = document.getElementById("copy-key-btn");
+        const copyCodeBtn = document.getElementById("copy-code-btn");
+        const feedback = document.getElementById("feedback");
+        const pixAmountLabel = document.getElementById("pix-amount-label");
+
+        function emvField(id, value) {
+            const size = String(value.length).padStart(2, "0");
+            return `${id}${size}${value}`;
+        }
+
+        function crc16(str) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < str.length; i++) {
+                crc ^= str.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
+                    crc &= 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, "0");
+        }
+
+        function sanitizeName(name) {
+            return (name || "FALCON AI")
+                .toUpperCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^A-Z0-9 ]/g, "")
+                .slice(0, 25)
+                .trim() || "FALCON AI";
+        }
+
+        function sanitizeCity(city) {
+            return (city || "SAO PAULO")
+                .toUpperCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^A-Z0-9 ]/g, "")
+                .slice(0, 15)
+                .trim() || "SAO PAULO";
+        }
+
+        function buildPixPayload(key, receiverName, city, amount) {
+            const gui = emvField("00", "br.gov.bcb.pix");
+            const pixKey = emvField("01", key);
+            const merchantAccount = emvField("26", gui + pixKey);
+            const merchantCategory = emvField("52", "0000");
+            const currency = emvField("53", "986");
+            const amountField = emvField("54", Number(amount || 1).toFixed(2));
+            const country = emvField("58", "BR");
+            const nameField = emvField("59", sanitizeName(receiverName));
+            const cityField = emvField("60", sanitizeCity(city));
+            const txidField = emvField("62", emvField("05", "***"));
+
+            const base = "000201" +
+                merchantAccount +
+                merchantCategory +
+                currency +
+                amountField +
+                country +
+                nameField +
+                cityField +
+                txidField +
+                "6304";
+
+            return base + crc16(base);
+        }
+
+        async function copyToClipboard(text, successMsg) {
+            try {
+                await navigator.clipboard.writeText(text);
+                feedback.textContent = successMsg;
+            } catch (err) {
+                feedback.textContent = "Não foi possível copiar automaticamente.";
+            }
+        }
+
+        async function init() {
+            try {
+                const response = await fetch("/payments/pix-info");
+                const data = await response.json();
+
+                const pixKey = String(data.pixKey || "").trim();
+                const receiverName = String(data.receiverName || "FALCON AI");
+                const city = String(data.city || "SAO PAULO");
+                const amount = Number(data.amount || 1);
+
+                if (!pixKey) {
+                    throw new Error("PIX_KEY não configurado no servidor.");
+                }
+
+                const pixPayload = buildPixPayload(pixKey, receiverName, city, amount);
+                const qrUrl = "https://quickchart.io/qr?size=300&text=" + encodeURIComponent(pixPayload);
+
+                pixKeyBox.textContent = pixKey;
+                pixCodeBox.textContent = pixPayload;
+                pixQr.src = qrUrl;
+                if (pixAmountLabel) {
+                    pixAmountLabel.textContent = `R$ ${Number.isFinite(amount) ? amount.toFixed(2).replace(".", ",") : "1,00"}`;
+                }
+
+                copyKeyBtn.onclick = () => copyToClipboard(pixKey, "Chave PIX copiada.");
+                copyCodeBtn.onclick = () => copyToClipboard(pixPayload, "PIX copia e cola copiado.");
+            } catch (error) {
+                pixKeyBox.textContent = "Erro ao carregar dados PIX.";
+                pixCodeBox.textContent = "Erro ao gerar código.";
+                feedback.textContent = error?.message || "Erro inesperado.";
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

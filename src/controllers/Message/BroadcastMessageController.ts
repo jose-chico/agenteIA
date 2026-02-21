@@ -6,6 +6,11 @@ export const BroadcastMessageController = async (req: Request, res: Response) =>
     try {
         const { content } = req.body;
         const adminUserId = req.body.userId;
+        const userRole = String(req.body.userRole || "").toUpperCase();
+
+        if (userRole !== "ADMIN") {
+            return res.status(403).json({ error: "Apenas administradores podem enviar broadcast." });
+        }
 
         if (!content) {
             return res.status(400).json({ error: "Conteúdo da mensagem é obrigatório." });

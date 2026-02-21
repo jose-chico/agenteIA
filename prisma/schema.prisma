@@ -17,7 +17,7 @@ model User {
   phone                String?
   password             String
   
-  // Campos para o Stripe (Premium)
+  // Campo legado de integração de pagamento (mantido para compatibilidade do banco atual)
   stripeCustomerId     String?              @unique
   isPremium            Boolean              @default(false)
   
@@ -94,7 +94,7 @@ model PasswordResetToken {
   user        User      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 }
 
-// 5. Tabela de Pagamentos (Sincronizada com StripeWebhookController)
+// 5. Tabela de Pagamentos
 model Payment {
   id              Int      @id @default(autoincrement())
   stripePaymentId String?  @unique

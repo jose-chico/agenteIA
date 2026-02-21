@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 interface TokenPayload {
     userId?: string | number;
     id?: string | number;
+    role?: string;
     iat: number;
     exp: number;
 }
@@ -36,6 +37,9 @@ export const AuthMiddleware = (req: Request, res: Response, next: NextFunction) 
 
         // Passa o ID para o corpo da requisição para o controller usar
         req.body.userId = id;
+        if (decoded.role) {
+            req.body.userRole = decoded.role;
+        }
 
         return next();
     } catch (err) {
