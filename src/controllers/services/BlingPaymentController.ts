@@ -2,10 +2,13 @@ import { Request, Response } from "express";
 import { prisma } from "@/database/client";
 
 function buildPaymentLink(template: string, user: { id: number; email: string; name: string }) {
+    const reference = `falcon_user_${user.id}`;
+
     return template
         .split("{userId}").join(encodeURIComponent(String(user.id)))
         .split("{email}").join(encodeURIComponent(user.email))
-        .split("{name}").join(encodeURIComponent(user.name || ""));
+        .split("{name}").join(encodeURIComponent(user.name || ""))
+        .split("{reference}").join(encodeURIComponent(reference));
 }
 
 function isPaidStatus(value: unknown) {
@@ -88,6 +91,145 @@ function extractReference(payload: any): string {
         payload?.data?.externalReference ||
         ""
     ).trim();
+}
+
+function extractUserId(payload: any): number | null {
+    const raw =
+        payload?.userId ??
+        payload?.clienteId ??
+        payload?.customerId ??
+        payload?.data?.userId ??
+        payload?.data?.clienteId ??
+        payload?.data?.customerId ??
+        payload?.metadata?.userId ??
+        payload?.meta?.userId ??
+        null;
+
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    return null;
+}
+
+function tryExtractUserIdFromReference(reference: string): number | null {
+    if (!reference) return null;
+
+    const patterns = [
+        /userId[:=_-]?(\d+)/i,
+        /uid[:=_-]?(\d+)/i,
+        /clienteId[:=_-]?(\d+)/i,
+        /id[:=_-]?(\d+)/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = reference.match(pattern);
+        if (match?.[1]) {
+            const id = Number(match[1]);
+            if (Number.isFinite(id) && id > 0) return id;
+        }
+    }
+
+    return null;
+}
+
+function extractEventName(payload: any): string {
+    return String(
+        payload?.event ||
+        payload?.eventName ||
+        payload?.type ||
+        payload?.topic ||
+        payload?.name ||
+        payload?.data?.event ||
+        payload?.data?.type ||
+        ""
+    ).trim().toLowerCase();
+}
+
+function isPaidEvent(payload: any): boolean {
+    const status = extractStatus(payload);
+    if (isPaidStatus(status)) return true;
+
+    const event = extractEventName(payload);
+    if (!event) return false;
+
+    return [
+        "paid",
+        "pago",
+        "approved",
+        "confirm",
+        "receb"
+    ].some((token) => event.includes(token));
+}
+
+function isWebhookAuthorized(req: Request): boolean {
+    const secret = (process.env.BLING_WEBHOOK_SECRET || "").trim();
+    if (!secret) return true;
+
+    const headerSecret = String(req.headers["x-webhook-secret"] || "").trim();
+    const querySecret = String(req.query.secret || "").trim();
+    const authHeader = String(req.headers.authorization || "").trim();
+    const bearer = authHeader.toLowerCase().startsWith("bearer ")
+        ? authHeader.slice(7).trim()
+        : "";
+
+    return headerSecret === secret || querySecret === secret || bearer === secret;
+}
+
+async function releaseAccessFromPaymentData(params: {
+    email: string;
+    userId: number | null;
+    reference: string;
+    paymentId: string;
+    status: string;
+    amount: number;
+}) {
+    const { email, userId, reference, paymentId, status, amount } = params;
+
+    const referenceUserId = tryExtractUserIdFromReference(reference);
+    const finalUserId = userId || referenceUserId;
+
+    const user =
+        (finalUserId
+            ? await prisma.user.findUnique({ where: { id: finalUserId } })
+            : null) ||
+        (email
+            ? await prisma.user.findUnique({ where: { email } })
+            : null);
+
+    if (!user) {
+        return { ok: false as const, reason: "user_not_found" };
+    }
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { isPremium: true }
+    });
+
+    const effectivePaymentId = paymentId || `bling-${user.id}-${Date.now()}`;
+
+    await prisma.payment.upsert({
+        where: { stripePaymentId: effectivePaymentId },
+        update: {
+            status: status || "paid",
+            amount,
+            customerEmail: user.email,
+            customerName: user.name,
+            paymentMethod: "BLING_LINK",
+            paidAt: new Date()
+        },
+        create: {
+            stripePaymentId: effectivePaymentId,
+            stripeSessionId: reference || null,
+            amount,
+            currency: "BRL",
+            status: status || "paid",
+            customerEmail: user.email,
+            customerName: user.name,
+            paymentMethod: "BLING_LINK",
+            paidAt: new Date()
+        }
+    });
+
+    return { ok: true as const, userId: user.id };
 }
 
 export const GetPaymentAccessStatusController = async (req: Request, res: Response) => {
@@ -210,17 +352,15 @@ export const ConfirmBlingPaymentController = async (req: Request, res: Response)
 
 export const BlingWebhookController = async (req: Request, res: Response) => {
     try {
-        const secret = (process.env.BLING_WEBHOOK_SECRET || "").trim();
-        const sentSecret = String(req.headers["x-webhook-secret"] || "").trim();
-
-        if (secret && sentSecret !== secret) {
+        if (!isWebhookAuthorized(req)) {
             return res.status(401).json({ error: "Webhook não autorizado." });
         }
 
         const payload = req.body || {};
         const status = extractStatus(payload);
-        const isPaid = isPaidStatus(status);
+        const isPaid = isPaidEvent(payload);
         const email = extractEmail(payload);
+        const userId = extractUserId(payload);
         const paymentId = extractPaymentId(payload);
         const reference = extractReference(payload);
         const amount = extractAmount(payload);
@@ -229,47 +369,24 @@ export const BlingWebhookController = async (req: Request, res: Response) => {
             return res.status(200).json({ received: true, ignored: "status_not_paid" });
         }
 
-        if (!email) {
-            console.warn("Webhook Bling sem email identificável:", payload);
-            return res.status(400).json({ error: "Email do pagador não encontrado no payload." });
-        }
-
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) {
-            return res.status(404).json({ error: "Usuário não encontrado para este pagamento." });
-        }
-
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { isPremium: true }
+        const released = await releaseAccessFromPaymentData({
+            email,
+            userId,
+            reference,
+            paymentId,
+            status,
+            amount
         });
 
-        if (paymentId) {
-            await prisma.payment.upsert({
-                where: { stripePaymentId: paymentId },
-                update: {
-                    status: status || "paid",
-                    amount,
-                    customerEmail: user.email,
-                    customerName: user.name,
-                    paymentMethod: "BLING_LINK",
-                    paidAt: new Date()
-                },
-                create: {
-                    stripePaymentId: paymentId,
-                    stripeSessionId: reference || null,
-                    amount,
-                    currency: "BRL",
-                    status: status || "paid",
-                    customerEmail: user.email,
-                    customerName: user.name,
-                    paymentMethod: "BLING_LINK",
-                    paidAt: new Date()
-                }
+        if (!released.ok) {
+            console.warn("Webhook Bling sem usuário vinculável:", payload);
+            return res.status(202).json({
+                received: true,
+                pending: "user_not_found"
             });
         }
 
-        return res.status(200).json({ received: true, userId: user.id });
+        return res.status(200).json({ received: true, userId: released.userId });
     } catch (error) {
         console.error("Erro em BlingWebhookController:", error);
         return res.status(500).json({ error: "Erro ao processar webhook do Bling." });

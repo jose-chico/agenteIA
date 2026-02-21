@@ -214,6 +214,7 @@
 
                 copyKeyBtn.onclick = () => copyToClipboard(pixKey, "Chave PIX copiada.");
                 copyCodeBtn.onclick = () => copyToClipboard(pixPayload, "PIX copia e cola copiado.");
+                feedback.textContent = "Após pagar, volte ao chat e clique em 'Já paguei, verificar acesso'.";
             } catch (error) {
                 pixKeyBox.textContent = "Erro ao carregar dados PIX.";
                 pixCodeBox.textContent = "Erro ao gerar código.";
