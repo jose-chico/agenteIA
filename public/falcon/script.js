@@ -60,6 +60,25 @@ const chatBlocked = document.getElementById("chatBlocked");
 const loginChatBtn = document.getElementById("loginChatBtn");
 const signupChatBtn = document.getElementById("signupChatBtn");
 
+function ensureEmbeddedChatSandbox() {
+    if (!embeddedChat) return;
+
+    const requiredFlags = [
+        "allow-same-origin",
+        "allow-forms",
+        "allow-scripts",
+        "allow-popups",
+        "allow-popups-to-escape-sandbox"
+    ];
+
+    const current = (embeddedChat.getAttribute("sandbox") || "")
+        .split(/\s+/)
+        .filter(Boolean);
+
+    const merged = new Set([...current, ...requiredFlags]);
+    embeddedChat.setAttribute("sandbox", Array.from(merged).join(" "));
+}
+
 function openSideChat(route = "/chat") {
     if (!sideChat) return;
     sideChat.classList.remove("closed");
@@ -68,6 +87,7 @@ function openSideChat(route = "/chat") {
 
     // Reset and reload iframe with specified route
     if (embeddedChat) {
+        ensureEmbeddedChatSandbox();
         embeddedChat.src = ""; // Reset iframe
         setTimeout(() => {
             embeddedChat.src = route;
@@ -97,6 +117,8 @@ function closeSideChat() {
 
 if (toggleChatBtn) toggleChatBtn.addEventListener("click", () => openSideChat("../index.html"));
 if (closeChatBtn) closeChatBtn.addEventListener("click", closeSideChat);
+
+ensureEmbeddedChatSandbox();
 
 // Login/Signup buttons open side panel with their respective routes
 if (loginChatBtn) loginChatBtn.addEventListener("click", () => openSideChat("../login.html"));
