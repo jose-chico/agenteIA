@@ -507,6 +507,8 @@ body {
     font-size: 26px;
     line-height: 1;
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 10px;
 }
 .chat-container {
     flex: 1 1 auto;
@@ -534,6 +536,23 @@ body {
     }
     .side-chat.open {
         transform: translateX(0);
+    }
+
+    .chat-header {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: linear-gradient(180deg, rgba(6,8,20,0.98), rgba(8,10,20,0.95));
+    }
+
+    .chat-close {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        min-width: 38px;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 

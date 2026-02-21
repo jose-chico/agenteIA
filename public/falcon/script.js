@@ -115,7 +115,16 @@ function closeSideChat() {
     sideChat.setAttribute("aria-hidden", "true");
 }
 
-if (toggleChatBtn) toggleChatBtn.addEventListener("click", () => openSideChat("../index.html"));
+function toggleSideChat() {
+    if (!sideChat) return;
+    if (sideChat.classList.contains("open")) {
+        closeSideChat();
+        return;
+    }
+    openSideChat("../index.html");
+}
+
+if (toggleChatBtn) toggleChatBtn.addEventListener("click", toggleSideChat);
 if (closeChatBtn) closeChatBtn.addEventListener("click", closeSideChat);
 
 ensureEmbeddedChatSandbox();
