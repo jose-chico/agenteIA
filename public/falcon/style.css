@@ -1558,3 +1558,204 @@ body {
         width: 100%;
     }
 }
+/* ================= ROBOTIC FUTURISTIC THEME OVERRIDES ================= */
+:root {
+    --bot-bg-0: #05070d;
+    --bot-bg-1: #0b1220;
+    --bot-panel: rgba(10, 18, 30, 0.82);
+    --bot-panel-strong: rgba(10, 18, 30, 0.94);
+    --bot-cyan: #33e6ff;
+    --bot-green: #19f9a9;
+    --bot-blue: #6ab6ff;
+    --bot-text: #d7edf8;
+    --bot-muted: #8da7bb;
+    --bot-glow: 0 0 0 1px rgba(51, 230, 255, 0.2), 0 10px 28px rgba(0, 0, 0, 0.45);
+    --bot-glow-strong: 0 0 0 1px rgba(25, 249, 169, 0.28), 0 18px 42px rgba(0, 0, 0, 0.52);
+}
+
+body {
+    color: var(--bot-text);
+    background:
+        radial-gradient(circle at 15% 18%, rgba(51, 230, 255, 0.18), transparent 45%),
+        radial-gradient(circle at 84% 30%, rgba(25, 249, 169, 0.14), transparent 42%),
+        linear-gradient(160deg, rgba(5, 7, 13, 0.92) 0%, rgba(11, 18, 32, 0.88) 100%),
+        url('foto11.png') center/cover no-repeat fixed;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.12;
+    background-image:
+        linear-gradient(rgba(106, 182, 255, 0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(106, 182, 255, 0.16) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black 30%, transparent 100%);
+    z-index: 0;
+}
+
+header,
+main,
+footer {
+    position: relative;
+    z-index: 1;
+}
+
+.header {
+    background: linear-gradient(120deg, rgba(8, 13, 24, 0.95), rgba(7, 16, 28, 0.92));
+    border-bottom: 1px solid rgba(51, 230, 255, 0.25);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(10px);
+}
+
+.logo,
+.nav-links a,
+.hero-content h1,
+h2,
+h3,
+h4 {
+    letter-spacing: 0.02em;
+}
+
+.logo i,
+.nav-links a:hover,
+.section-subtitle strong {
+    color: var(--bot-cyan);
+}
+
+.btn,
+.btn-signup {
+    color: #05111b;
+    background: linear-gradient(135deg, var(--bot-green), var(--bot-cyan));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 12px 24px rgba(25, 249, 169, 0.22);
+}
+
+.btn:hover,
+.btn-signup:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 30px rgba(51, 230, 255, 0.22);
+}
+
+.btn-login,
+.btn.btn-secondary {
+    border-color: rgba(51, 230, 255, 0.65);
+    color: var(--bot-cyan);
+}
+
+.btn-login:hover,
+.btn.btn-secondary:hover {
+    background: rgba(51, 230, 255, 0.12);
+    color: #c9f4ff;
+}
+
+.hero::before {
+    background:
+        radial-gradient(circle at 20% 50%, rgba(51, 230, 255, 0.18) 0%, transparent 56%),
+        radial-gradient(circle at 80% 80%, rgba(25, 249, 169, 0.14) 0%, transparent 54%);
+}
+
+.card,
+.service-item,
+.dashboard-item,
+.tech-item,
+.diff-card,
+.gallery-card,
+.notif-type,
+.rate-box,
+.what-item,
+.chat-wrapper,
+.side-chat-inner {
+    background: linear-gradient(150deg, rgba(10, 18, 30, 0.88), rgba(10, 18, 30, 0.66));
+    border-color: rgba(51, 230, 255, 0.28) !important;
+    box-shadow: var(--bot-glow);
+}
+
+.card:hover,
+.service-item:hover,
+.dashboard-item:hover,
+.tech-item:hover,
+.diff-card:hover,
+.gallery-card:hover,
+.notif-type:hover,
+.what-item:hover {
+    box-shadow: var(--bot-glow-strong);
+}
+
+.about,
+.services,
+.contact,
+.about-falcon,
+.user-dashboard,
+.notifications-integration,
+.differentials,
+.assertiveness-rate,
+.technology,
+.gallery-cards-section,
+.footer {
+    background-color: transparent;
+}
+
+.about,
+.about-falcon,
+.user-dashboard,
+.notifications-integration,
+.differentials,
+.assertiveness-rate,
+.technology,
+.gallery-cards-section,
+.services,
+.contact,
+.footer {
+    border-top-color: rgba(51, 230, 255, 0.16) !important;
+    border-bottom-color: rgba(51, 230, 255, 0.14) !important;
+}
+
+p,
+.footer-section p,
+.footer-section a,
+.diff-card p,
+.gallery-card p,
+.tech-item p,
+.service-item p,
+.intro-text,
+.section-subtitle {
+    color: var(--bot-muted);
+}
+
+.impact-phrase {
+    border-top-color: rgba(51, 230, 255, 0.45);
+    border-bottom-color: rgba(25, 249, 169, 0.45);
+    background: linear-gradient(140deg, rgba(51, 230, 255, 0.08), rgba(25, 249, 169, 0.08));
+}
+
+.impact-phrase h2,
+.about h2,
+.services h2,
+.contact h2,
+.falcon-intro h2,
+.user-dashboard h2,
+.notifications-integration h2,
+.differentials h2,
+.assertiveness-rate h2,
+.technology h2,
+.gallery-cards-section h2 {
+    color: #baf5ff;
+    text-shadow: 0 0 16px rgba(51, 230, 255, 0.26);
+}
+
+.chat-toggle {
+    background: linear-gradient(180deg, var(--bot-cyan), var(--bot-green)) !important;
+    color: #07121d !important;
+}
+
+@media (max-width: 767px) {
+    body {
+        background:
+            radial-gradient(circle at 20% 10%, rgba(51, 230, 255, 0.16), transparent 50%),
+            linear-gradient(160deg, rgba(5, 7, 13, 0.96), rgba(11, 18, 32, 0.92)),
+            url('foto11.png') center/cover no-repeat scroll;
+    }
+}
