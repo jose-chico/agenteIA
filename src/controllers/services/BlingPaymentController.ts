@@ -1,6 +1,35 @@
 import { Request, Response } from "express";
 import { prisma } from "@/database/client";
 
+type BlingPayload = {
+    [key: string]: unknown;
+    email?: unknown;
+    customerEmail?: unknown;
+    customer?: {
+        [key: string]: unknown;
+        email?: unknown;
+    };
+    data?: BlingPayload;
+    cobranca?: {
+        [key: string]: unknown;
+        email?: unknown;
+    };
+    pagamento?: {
+        [key: string]: unknown;
+        email?: unknown;
+        status?: unknown;
+        valor?: unknown;
+    };
+    metadata?: {
+        [key: string]: unknown;
+        userId?: unknown;
+    };
+    meta?: {
+        [key: string]: unknown;
+        userId?: unknown;
+    };
+};
+
 function buildPaymentLink(template: string, user: { id: number; email: string; name: string }) {
     const reference = `falcon_user_${user.id}`;
 
@@ -27,7 +56,7 @@ function isPaidStatus(value: unknown) {
     ].some((item) => status.includes(item));
 }
 
-function extractEmail(payload: any): string {
+function extractEmail(payload: BlingPayload): string {
     return String(
         payload?.email ||
         payload?.customerEmail ||
@@ -41,7 +70,7 @@ function extractEmail(payload: any): string {
     ).trim().toLowerCase();
 }
 
-function extractStatus(payload: any): string {
+function extractStatus(payload: BlingPayload): string {
     return String(
         payload?.status ||
         payload?.paymentStatus ||
@@ -52,7 +81,7 @@ function extractStatus(payload: any): string {
     ).trim();
 }
 
-function extractAmount(payload: any): number {
+function extractAmount(payload: BlingPayload): number {
     const amountRaw =
         payload?.amount ??
         payload?.value ??
@@ -71,7 +100,7 @@ function extractAmount(payload: any): number {
     return Number.isFinite(normalized) ? normalized : 0;
 }
 
-function extractPaymentId(payload: any): string {
+function extractPaymentId(payload: BlingPayload): string {
     return String(
         payload?.paymentId ||
         payload?.id ||
@@ -83,7 +112,7 @@ function extractPaymentId(payload: any): string {
     ).trim();
 }
 
-function extractReference(payload: any): string {
+function extractReference(payload: BlingPayload): string {
     return String(
         payload?.reference ||
         payload?.externalReference ||
@@ -93,7 +122,7 @@ function extractReference(payload: any): string {
     ).trim();
 }
 
-function extractUserId(payload: any): number | null {
+function extractUserId(payload: BlingPayload): number | null {
     const raw =
         payload?.userId ??
         payload?.clienteId ??
@@ -113,25 +142,99 @@ function extractUserId(payload: any): number | null {
 function tryExtractUserIdFromReference(reference: string): number | null {
     if (!reference) return null;
 
-    const patterns = [
-        /userId[:=_-]?(\d+)/i,
-        /uid[:=_-]?(\d+)/i,
-        /clienteId[:=_-]?(\d+)/i,
-        /id[:=_-]?(\d+)/i
+    const parsePositive = (raw: unknown): number | null => {
+        const value = Number(String(raw ?? "").trim());
+        if (!Number.isFinite(value) || value <= 0) return null;
+        return value;
+    };
+
+    const decodedReference = (() => {
+        let current = String(reference || "").trim();
+        if (!current) return "";
+
+        // Alguns gateways enviam reference URL-encoded (uma ou mais vezes).
+        for (let i = 0; i < 2; i++) {
+            try {
+                const next = decodeURIComponent(current);
+                if (next === current) break;
+                current = next;
+            } catch {
+                break;
+            }
+        }
+
+        return current;
+    })();
+
+    const normalized = decodedReference.trim();
+    if (!normalized) return null;
+
+    const searchByKey = (value: string): number | null => {
+        const withQueryPrefix = value.includes("?")
+            ? value
+            : `https://ref.local/?${value.replace(/^[?#&]+/, "")}`;
+
+        try {
+            const url = new URL(withQueryPrefix);
+            const params = url.searchParams;
+            const keys = [
+                "userId",
+                "userid",
+                "user_id",
+                "uid",
+                "clienteId",
+                "cliente_id",
+                "customerId",
+                "customer_id"
+            ];
+
+            for (const key of keys) {
+                const parsed = parsePositive(params.get(key));
+                if (parsed) return parsed;
+            }
+        } catch {
+            // Não é URL válida, segue para os regex abaixo.
+        }
+
+        return null;
+    };
+
+    const byQuery = searchByKey(normalized);
+    if (byQuery) return byQuery;
+
+    const patterns: Array<{ regex: RegExp; group: number }> = [
+        {
+            regex: /(?:^|[^a-z0-9])(falcon[_-]?user|user[_-]?id|user|uid|cliente[_-]?id|customer[_-]?id)[^\d]{0,5}(\d{1,12})(?:[^a-z0-9]|$)/i,
+            group: 2
+        },
+        {
+            regex: /(?:^|[^a-z0-9])id[^\d]{0,3}(\d{1,12})(?:[^a-z0-9]|$)/i,
+            group: 1
+        }
     ];
 
-    for (const pattern of patterns) {
-        const match = reference.match(pattern);
-        if (match?.[1]) {
-            const id = Number(match[1]);
-            if (Number.isFinite(id) && id > 0) return id;
+    for (const { regex, group } of patterns) {
+        const match = normalized.match(regex);
+        if (match?.[group]) {
+            const parsed = parsePositive(match[group]);
+            if (parsed) return parsed;
         }
+    }
+
+    const asNumber = parsePositive(normalized);
+    if (asNumber) return asNumber;
+
+    // fallback para referências no formato "falcon_user_123" ou apenas "..._123".
+    const trailing = normalized.match(/(?:falcon[_-]?user|user|uid|cliente|customer)?[_-](\d{1,12})$/i);
+    if (trailing?.[1]) {
+        const parsed = parsePositive(trailing[1]);
+        if (parsed) return parsed;
     }
 
     return null;
 }
 
-function extractEventName(payload: any): string {
+function extractEventName(payload: BlingPayload): string {
     return String(
         payload?.event ||
         payload?.eventName ||
@@ -144,7 +247,7 @@ function extractEventName(payload: any): string {
     ).trim().toLowerCase();
 }
 
-function isPaidEvent(payload: any): boolean {
+function isPaidEvent(payload: BlingPayload): boolean {
     const status = extractStatus(payload);
     if (isPaidStatus(status)) return true;
 
@@ -232,6 +335,115 @@ async function releaseAccessFromPaymentData(params: {
     return { ok: true as const, userId: user.id };
 }
 
+async function reconcilePremiumFromStoredPayments(user: { id: number; email: string; isPremium: boolean }) {
+    if (user.isPremium) {
+        return true;
+    }
+
+    const paidStatusTokens = [
+        "paid",
+        "pago",
+        "approved",
+        "aprovado",
+        "received",
+        "recebido",
+        "confirmed",
+        "confirmado"
+    ];
+
+    const payment = await prisma.payment.findFirst({
+        where: {
+            AND: [
+                {
+                    OR: [
+                        { customerEmail: user.email },
+                        { stripeSessionId: { contains: `falcon_user_${user.id}` } }
+                    ]
+                },
+                {
+                    OR: paidStatusTokens.map((token) => ({
+                        status: {
+                            contains: token,
+                            mode: "insensitive"
+                        }
+                    }))
+                }
+            ]
+        },
+        select: { id: true }
+    });
+
+    if (!payment) {
+        return false;
+    }
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { isPremium: true }
+    });
+
+    return true;
+}
+
+async function persistPaymentEvidence(params: {
+    email: string;
+    reference: string;
+    paymentId: string;
+    status: string;
+    amount: number;
+}) {
+    const { email, reference, paymentId, status, amount } = params;
+
+    const paymentKey = paymentId.trim();
+    const paymentRef = reference.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!paymentKey && !paymentRef) {
+        return;
+    }
+
+    const updateData = {
+        status: status || "paid",
+        amount,
+        customerEmail: normalizedEmail || null,
+        paymentMethod: "BLING_LINK",
+        paidAt: new Date()
+    };
+
+    if (paymentKey) {
+        await prisma.payment.upsert({
+            where: { stripePaymentId: paymentKey },
+            update: updateData,
+            create: {
+                stripePaymentId: paymentKey,
+                stripeSessionId: paymentRef || null,
+                amount,
+                currency: "BRL",
+                status: status || "paid",
+                customerEmail: normalizedEmail || null,
+                paymentMethod: "BLING_LINK",
+                paidAt: new Date()
+            }
+        });
+        return;
+    }
+
+    await prisma.payment.upsert({
+        where: { stripeSessionId: paymentRef },
+        update: updateData,
+        create: {
+            stripePaymentId: null,
+            stripeSessionId: paymentRef,
+            amount,
+            currency: "BRL",
+            status: status || "paid",
+            customerEmail: normalizedEmail || null,
+            paymentMethod: "BLING_LINK",
+            paidAt: new Date()
+        }
+    });
+}
+
 export const GetPaymentAccessStatusController = async (req: Request, res: Response) => {
     try {
         const authUserId = Number(req.body.userId);
@@ -254,9 +466,11 @@ export const GetPaymentAccessStatusController = async (req: Request, res: Respon
         const fallbackPixUrl = `${appUrl}/pagamento.html?userId=${encodeURIComponent(String(user.id))}&email=${encodeURIComponent(user.email)}`;
         const paymentUrl = paymentTemplate ? buildPaymentLink(paymentTemplate, user) : fallbackPixUrl;
 
+        const isPremium = await reconcilePremiumFromStoredPayments(user);
+
         return res.status(200).json({
-            isPremium: user.isPremium,
-            paymentRequired: !user.isPremium,
+            isPremium,
+            paymentRequired: !isPremium,
             paymentUrl
         });
     } catch (error) {
@@ -368,6 +582,14 @@ export const BlingWebhookController = async (req: Request, res: Response) => {
         if (!isPaid) {
             return res.status(200).json({ received: true, ignored: "status_not_paid" });
         }
+
+        await persistPaymentEvidence({
+            email,
+            reference,
+            paymentId,
+            status,
+            amount
+        });
 
         const released = await releaseAccessFromPaymentData({
             email,
