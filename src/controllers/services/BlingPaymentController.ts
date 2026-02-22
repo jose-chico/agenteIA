@@ -30,6 +30,25 @@ type BlingPayload = {
     };
 };
 
+function normalizeWebhookPayload(rawBody: unknown): BlingPayload {
+    if (typeof rawBody === "string") {
+        try {
+            const parsed = JSON.parse(rawBody);
+            if (parsed && typeof parsed === "object") {
+                return parsed as BlingPayload;
+            }
+        } catch {
+            return {};
+        }
+    }
+
+    if (rawBody && typeof rawBody === "object") {
+        return rawBody as BlingPayload;
+    }
+
+    return {};
+}
+
 function buildPaymentLink(template: string, user: { id: number; email: string; name: string }) {
     const reference = `falcon_user_${user.id}`;
 
@@ -444,6 +463,12 @@ async function persistPaymentEvidence(params: {
     });
 }
 
+function resolveBlingPaymentUrl(template: string, user: { id: number; email: string; name: string }): string | null {
+    const normalizedTemplate = template.trim();
+    if (!normalizedTemplate) return null;
+    return buildPaymentLink(normalizedTemplate, user);
+}
+
 export const GetPaymentAccessStatusController = async (req: Request, res: Response) => {
     try {
         const authUserId = Number(req.body.userId);
@@ -461,10 +486,14 @@ export const GetPaymentAccessStatusController = async (req: Request, res: Respon
             return res.status(404).json({ error: "Usuário não encontrado." });
         }
 
-        const paymentTemplate = (process.env.BLING_PAYMENT_LINK || "").trim();
-        const appUrl = (process.env.APP_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
-        const fallbackPixUrl = `${appUrl}/pagamento.html?userId=${encodeURIComponent(String(user.id))}&email=${encodeURIComponent(user.email)}`;
-        const paymentUrl = paymentTemplate ? buildPaymentLink(paymentTemplate, user) : fallbackPixUrl;
+        const paymentTemplate = process.env.BLING_PAYMENT_LINK || "";
+        const paymentUrl = resolveBlingPaymentUrl(paymentTemplate, user);
+        if (!paymentUrl) {
+            return res.status(503).json({
+                error: "Link de pagamento do Bling não configurado.",
+                code: "BLING_PAYMENT_LINK_NOT_CONFIGURED"
+            });
+        }
 
         const isPremium = await reconcilePremiumFromStoredPayments(user);
 
@@ -482,7 +511,7 @@ export const GetPaymentAccessStatusController = async (req: Request, res: Respon
 export const GetBlingPaymentLinkController = async (req: Request, res: Response) => {
     try {
         const authUserId = Number(req.body.userId);
-        const paymentTemplate = (process.env.BLING_PAYMENT_LINK || "").trim();
+        const paymentTemplate = process.env.BLING_PAYMENT_LINK || "";
 
         const user = await prisma.user.findUnique({
             where: { id: authUserId },
@@ -493,9 +522,13 @@ export const GetBlingPaymentLinkController = async (req: Request, res: Response)
             return res.status(404).json({ error: "Usuário não encontrado." });
         }
 
-        const appUrl = (process.env.APP_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
-        const fallbackPixUrl = `${appUrl}/pagamento.html?userId=${encodeURIComponent(String(user.id))}&email=${encodeURIComponent(user.email)}`;
-        const paymentUrl = paymentTemplate ? buildPaymentLink(paymentTemplate, user) : fallbackPixUrl;
+        const paymentUrl = resolveBlingPaymentUrl(paymentTemplate, user);
+        if (!paymentUrl) {
+            return res.status(503).json({
+                error: "Link de pagamento do Bling não configurado.",
+                code: "BLING_PAYMENT_LINK_NOT_CONFIGURED"
+            });
+        }
         return res.status(200).json({
             paymentUrl,
             isPremium: user.isPremium
@@ -567,10 +600,13 @@ export const ConfirmBlingPaymentController = async (req: Request, res: Response)
 export const BlingWebhookController = async (req: Request, res: Response) => {
     try {
         if (!isWebhookAuthorized(req)) {
+            console.warn("Webhook Bling nao autorizado.", {
+                contentType: req.headers["content-type"] || null
+            });
             return res.status(401).json({ error: "Webhook não autorizado." });
         }
 
-        const payload = req.body || {};
+        const payload = normalizeWebhookPayload(req.body);
         const status = extractStatus(payload);
         const isPaid = isPaidEvent(payload);
         const email = extractEmail(payload);
@@ -578,6 +614,17 @@ export const BlingWebhookController = async (req: Request, res: Response) => {
         const paymentId = extractPaymentId(payload);
         const reference = extractReference(payload);
         const amount = extractAmount(payload);
+
+        console.log("Webhook Bling recebido.", {
+            contentType: req.headers["content-type"] || null,
+            status,
+            isPaid,
+            email,
+            userId,
+            paymentId,
+            reference,
+            amount
+        });
 
         if (!isPaid) {
             return res.status(200).json({ received: true, ignored: "status_not_paid" });
@@ -601,7 +648,13 @@ export const BlingWebhookController = async (req: Request, res: Response) => {
         });
 
         if (!released.ok) {
-            console.warn("Webhook Bling sem usuário vinculável:", payload);
+            console.warn("Webhook Bling sem usuario vinculavel.", {
+                status,
+                email,
+                userId,
+                paymentId,
+                reference
+            });
             return res.status(202).json({
                 received: true,
                 pending: "user_not_found"
