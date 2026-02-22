@@ -1,4 +1,4 @@
-/* Configurações Gerais */
+﻿/* ConfiguraÃ§Ãµes Gerais */
 * { 
     box-sizing: border-box; 
     margin: 0; 
@@ -30,7 +30,7 @@ body {
     text-align: center;
 }
 
-/* Títulos e Textos */
+/* TÃ­tulos e Textos */
 h2 {
     color: #263238;
     margin-bottom: 10px;
@@ -43,7 +43,7 @@ p {
     margin-bottom: 25px;
 }
 
-/* Formulário e Inputs */
+/* FormulÃ¡rio e Inputs */
 .input-group {
     margin-bottom: 20px;
     text-align: left;
@@ -74,7 +74,7 @@ input:focus {
     box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.1);
 }
 
-/* Botões (Estilo Profissional) */
+/* BotÃµes (Estilo Profissional) */
 button {
     width: 100%;
     padding: 14px;
@@ -96,7 +96,7 @@ button:hover {
 
 /* Links */
 a {
-    color: #0288d1 !important; /* Forçando o azul profissional */
+    color: #0288d1 !important; /* ForÃ§ando o azul profissional */
     text-decoration: none;
     transition: 0.3s;
 }
@@ -111,4 +111,35 @@ a:hover {
     font-size: 13px;
     margin-top: 15px;
     min-height: 18px;
+}
+/* Botão X para fechar o chat quando página estiver em iframe */
+.login-box {
+    position: relative;
+}
+
+.iframe-close-chat {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #cfd8dc;
+    background: #ffffff;
+    color: #263238;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    z-index: 5;
+}
+
+.iframe-close-chat:hover {
+    background: #f5f7f8;
+    transform: none;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.16);
 }

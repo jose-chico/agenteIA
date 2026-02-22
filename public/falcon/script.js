@@ -1,24 +1,22 @@
-// Menu Hamburger Mobile
+﻿// Menu Hamburger Mobile
 const hamburger = document.getElementById("hamburger");
 
 if (hamburger) {
     const navLinks = document.getElementById("navLinks");
-    
-    hamburger.addEventListener("click", function() {
+
+    hamburger.addEventListener("click", function () {
         hamburger.classList.toggle("active");
         navLinks?.classList.toggle("active");
     });
 
     // Fechar menu ao clicar em um link
-    navLinks?.querySelectorAll("a").forEach(link => {
-        link.addEventListener("click", function() {
+    navLinks?.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", function () {
             hamburger.classList.remove("active");
             navLinks?.classList.remove("active");
         });
     });
 }
-
-// Botões de Logar e Cadastrar: agora são links externos, nenhum handler necessário
 
 // Aviso breve antes do redirecionamento para páginas de login/cadastro
 function showRedirectNotice(href) {
@@ -26,23 +24,20 @@ function showRedirectNotice(href) {
     toast.className = "redirect-toast";
     toast.textContent = "Você será redirecionado...";
     document.body.appendChild(toast);
-    // trigger animation
     requestAnimationFrame(() => toast.classList.add("visible"));
 
-    // Redirecionar após breve atraso para exibir o aviso
     setTimeout(() => {
         window.location.href = href;
     }, 900);
 
-    // Remover o toast após redirecionamento (caso o redirecionamento seja interrompido)
     setTimeout(() => {
         toast.classList.remove("visible");
         setTimeout(() => toast.remove(), 300);
     }, 1600);
 }
 
-document.querySelectorAll(".auth-buttons a").forEach(link => {
-    link.addEventListener("click", function(e) {
+document.querySelectorAll(".auth-buttons a").forEach((link) => {
+    link.addEventListener("click", function (e) {
         e.preventDefault();
         showRedirectNotice(this.href);
     });
@@ -59,6 +54,13 @@ const chatBlocked = document.getElementById("chatBlocked");
 // Login/Signup buttons open side panel with login/signup routes
 const loginChatBtn = document.getElementById("loginChatBtn");
 const signupChatBtn = document.getElementById("signupChatBtn");
+
+function syncChatToggleState() {
+    if (!toggleChatBtn || !sideChat) return;
+    const isOpen = sideChat.classList.contains("open");
+    toggleChatBtn.textContent = isOpen ? "X" : "💬";
+    toggleChatBtn.setAttribute("aria-label", isOpen ? "Fechar chat" : "Abrir chat");
+}
 
 function ensureEmbeddedChatSandbox() {
     if (!embeddedChat) return;
@@ -84,11 +86,11 @@ function openSideChat(route = "/chat") {
     sideChat.classList.remove("closed");
     sideChat.classList.add("open");
     sideChat.setAttribute("aria-hidden", "false");
+    syncChatToggleState();
 
-    // Reset and reload iframe with specified route
     if (embeddedChat) {
         ensureEmbeddedChatSandbox();
-        embeddedChat.src = ""; // Reset iframe
+        embeddedChat.src = "";
         setTimeout(() => {
             embeddedChat.src = route;
             chatLoader.hidden = false;
@@ -113,6 +115,7 @@ function closeSideChat() {
     sideChat.classList.remove("open");
     sideChat.classList.add("closed");
     sideChat.setAttribute("aria-hidden", "true");
+    syncChatToggleState();
 }
 
 function toggleSideChat() {
@@ -126,10 +129,18 @@ function toggleSideChat() {
 
 if (toggleChatBtn) toggleChatBtn.addEventListener("click", toggleSideChat);
 if (closeChatBtn) closeChatBtn.addEventListener("click", closeSideChat);
+syncChatToggleState();
+
+window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || typeof data !== "object") return;
+
+    if (data.type === "falcon:chat-close") closeSideChat();
+    if (data.type === "falcon:chat-open") openSideChat("../index.html");
+});
 
 ensureEmbeddedChatSandbox();
 
-// Login/Signup buttons open side panel with their respective routes
 if (loginChatBtn) loginChatBtn.addEventListener("click", () => openSideChat("../login.html"));
 if (signupChatBtn) signupChatBtn.addEventListener("click", () => openSideChat("../cadastro.html"));
 
@@ -146,14 +157,13 @@ if (embeddedChat) {
             const iframePath = embeddedChat.contentWindow.location.pathname;
             if (iframePath && iframePath !== lastPath) {
                 lastPath = iframePath;
-                // Se o iframe redirecionou para /index ou / (após login bem-sucedido)
                 if ((iframePath === "/index.html" || iframePath === "/") && embeddedChat.src.includes("login.html")) {
                     console.log("Login detected, reloading to chat");
                     embeddedChat.src = "../index.html";
                 }
             }
         } catch (e) {
-            // Same-origin: conseguimos acessar contentWindow agora, mas ainda safe
+            // Same-origin: safe no-op
         }
     }, 1000);
 }
@@ -161,23 +171,21 @@ if (embeddedChat) {
 // Botões CTA de Contato
 const ctaButtons = document.querySelectorAll(".cta-buttons .btn");
 
-ctaButtons.forEach(button => {
-    button.addEventListener("click", function() {
+ctaButtons.forEach((button) => {
+    button.addEventListener("click", function () {
         if (this.textContent.includes("Ativar")) {
             alert("Você será redirecionado para ativar o Falcon AI...");
-            // window.location.href = 'activate.html';
         } else if (this.textContent.includes("Demo")) {
             alert("Abrindo agendamento de demo gratuita...");
-            // window.location.href = 'demo.html';
         }
     });
 });
 
 // Smooth Scroll para navegação
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener("click", function (e) {
         e.preventDefault();
-        
+
         const target = document.querySelector(this.getAttribute("href"));
         if (target) {
             target.scrollIntoView({
@@ -188,20 +196,10 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Formulário de Contato (Removido - Seção simplificada)
-// const contactForm = document.querySelector('.contact-form');
-// if (contactForm) {
-//     contactForm.addEventListener('submit', function(e) {
-//         e.preventDefault();
-//         alert('Obrigado pelas suas informações! Entraremos em contato em breve.');
-//         this.reset();
-//     });
-// }
-
 // Botão Hero
 const heroButton = document.querySelector(".hero .btn");
 if (heroButton) {
-    heroButton.addEventListener("click", function() {
+    heroButton.addEventListener("click", function () {
         const aboutSection = document.getElementById("sobre");
         if (aboutSection) {
             aboutSection.scrollIntoView({ behavior: "smooth" });
@@ -210,19 +208,16 @@ if (heroButton) {
 }
 
 // Menu mobile responsivo (opcional)
-// Adicione esta função se quiser um menu hamburger para mobile
 function handleMobileMenu() {
     const navLinks = document.querySelector(".nav-links");
-    
-    // Aqui você pode adicionar lógica para mostrar/esconder menu em telas pequenas
+
     if (window.innerWidth <= 768) {
-        // Adicione código para menu mobile
+        // espaço para lógica futura
+        void navLinks;
     }
 }
-
 
 window.addEventListener("resize", handleMobileMenu);
 handleMobileMenu();
 
-// Log de carregamento
 console.log("Página carregada com sucesso!");

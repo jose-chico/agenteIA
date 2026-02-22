@@ -1,16 +1,21 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">`n    <meta name="mobile-web-app-capable" content="yes">`n    <meta name="apple-mobile-web-app-capable" content="yes">`n    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Cadastro - Chat Suporte</title>
-    <link rel="stylesheet" href="login-style.css"> </head>
+    <link rel="stylesheet" href="login-style.css">
+</head>
 <body>
     <div class="login-container">
         <div class="login-box">
+            <button type="button" id="iframe-close-chat" class="iframe-close-chat" aria-label="Fechar chat" hidden>&times;</button>
             <h2>Criar Conta</h2>
             <p>Preencha os dados para acessar o suporte</p>
-            
+
             <form id="cadastro-form">
                 <div class="input-group">
                     <label for="new-username">Nome Completo</label>
@@ -26,7 +31,7 @@
                     <label for="phone">Telefone</label>
                     <input type="tel" id="phone" placeholder="(00) 00000-0000" required>
                 </div>
-                
+
                 <div class="input-group">
                     <label for="new-password">Senha</label>
                     <input type="password" id="new-password" placeholder="Crie uma senha" required>

@@ -1,5 +1,13 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
     const cadastroForm = document.getElementById("cadastro-form");
+    const closeChatBtn = document.getElementById("iframe-close-chat");
+
+    if (closeChatBtn && window.self !== window.top) {
+        closeChatBtn.hidden = false;
+        closeChatBtn.addEventListener("click", () => {
+            window.parent.postMessage({ type: "falcon:chat-close" }, "*");
+        });
+    }
 
     if (!cadastroForm) return;
 
@@ -31,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.innerText = "Criando conta...";
 
         try {
-            // URL ATUALIZADA PARA O BACKEND NA PORTA 8000
             const response = await fetch("https://agenteia-22ds.onrender.com/users", {
                 method: "POST",
                 headers: {
