@@ -58,8 +58,9 @@ const signupChatBtn = document.getElementById("signupChatBtn");
 function syncChatToggleState() {
     if (!toggleChatBtn || !sideChat) return;
     const isOpen = sideChat.classList.contains("open");
-    toggleChatBtn.textContent = isOpen ? "X" : "💬";
+    toggleChatBtn.textContent = isOpen ? "X" : "Chat";
     toggleChatBtn.setAttribute("aria-label", isOpen ? "Fechar chat" : "Abrir chat");
+    if (closeChatBtn) closeChatBtn.textContent = "X";
 }
 
 function ensureEmbeddedChatSandbox() {
@@ -221,3 +222,5 @@ window.addEventListener("resize", handleMobileMenu);
 handleMobileMenu();
 
 console.log("Página carregada com sucesso!");
+
+
