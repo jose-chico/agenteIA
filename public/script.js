@@ -90,19 +90,20 @@ function setChatDisabled(disabled) {
     if (attachBtn) attachBtn.disabled = disabled;
 }
 
-function showPaywall(message, paymentUrl) {
+function showPaywall(message) {
     setChatDisabled(true);
     chatUnlocked = false;
 
     if (paywallMessage) {
-        paywallMessage.innerText = message || "Para liberar o chat, finalize o pagamento no link abaixo.";
+        paywallMessage.innerText = message || "Para liberar o chat, gere o QR Code PIX abaixo e conclua o pagamento.";
     }
 
     if (paywallPayBtn) {
-        const hasUrl = Boolean(paymentUrl);
-        paywallPayBtn.href = hasUrl ? paymentUrl : "#";
-        paywallPayBtn.style.opacity = hasUrl ? "1" : "0.6";
-        paywallPayBtn.style.pointerEvents = hasUrl ? "auto" : "none";
+        paywallPayBtn.href = "/pagamento.html";
+        paywallPayBtn.target = "_blank";
+        paywallPayBtn.rel = "noopener noreferrer";
+        paywallPayBtn.style.opacity = "1";
+        paywallPayBtn.style.pointerEvents = "auto";
     }
 
     if (paywallModal) {
