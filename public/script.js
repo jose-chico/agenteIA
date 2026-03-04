@@ -90,16 +90,17 @@ function setChatDisabled(disabled) {
     if (attachBtn) attachBtn.disabled = disabled;
 }
 
-function showPaywall(message) {
+function showPaywall(message, paymentUrl) {
     setChatDisabled(true);
     chatUnlocked = false;
 
     if (paywallMessage) {
-        paywallMessage.innerText = message || "Para liberar o chat, gere o QR Code PIX abaixo e conclua o pagamento.";
+        paywallMessage.innerText = message || "Para liberar o chat, abra o pagamento PIX e conclua a cobrança.";
     }
 
     if (paywallPayBtn) {
-        paywallPayBtn.href = "/pagamento.html";
+        const hasUrl = Boolean(paymentUrl);
+        paywallPayBtn.href = hasUrl ? paymentUrl : "/pagamento.html";
         paywallPayBtn.target = "_blank";
         paywallPayBtn.rel = "noopener noreferrer";
         paywallPayBtn.style.opacity = "1";

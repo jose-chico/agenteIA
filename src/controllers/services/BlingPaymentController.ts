@@ -469,6 +469,96 @@ function resolveBlingPaymentUrl(template: string, user: { id: number; email: str
     return buildPaymentLink(normalizedTemplate, user);
 }
 
+function normalizeText(value: string): string {
+    return value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+}
+
+function likelyPublicBlingPage(url: string): boolean {
+    const normalized = String(url || "").trim().toLowerCase();
+    if (!normalized) return false;
+    return normalized.includes("bling.com.br");
+}
+
+function detectPaidStatusFromHtml(html: string): boolean {
+    const normalized = normalizeText(html || "");
+    if (!normalized) return false;
+
+    const paidPatterns = [
+        /situacao[^a-z0-9]{0,30}(pago|recebido|liquidado|baixado)/i,
+        /status[^a-z0-9]{0,30}(pago|recebido|liquidado|baixado)/i,
+        /cobranca[^a-z0-9]{0,30}(paga|recebida|liquidada)/i,
+        /pagamento[^a-z0-9]{0,30}(confirmado|aprovado|recebido)/i
+    ];
+
+    const pendingPatterns = [
+        /situacao[^a-z0-9]{0,30}(pendente|em aberto|atrasada|vencida)/i,
+        /status[^a-z0-9]{0,30}(pendente|em aberto|atrasada|vencida)/i,
+        /nao foi possivel gerar o recebimento com pix/i,
+        /vencimento da conta esta invalido/i
+    ];
+
+    const hasPaid = paidPatterns.some((regex) => regex.test(normalized));
+    if (!hasPaid) return false;
+
+    const hasPending = pendingPatterns.some((regex) => regex.test(normalized));
+    return !hasPending;
+}
+
+async function reconcilePremiumFromPublicBlingPage(user: { id: number; email: string; name: string }, paymentUrl: string) {
+    const enabled = String(process.env.BLING_PUBLIC_STATUS_CHECK || "true").trim().toLowerCase();
+    if (enabled === "0" || enabled === "false" || enabled === "off") {
+        return false;
+    }
+
+    if (!likelyPublicBlingPage(paymentUrl)) {
+        return false;
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 7000);
+        let response: globalThis.Response;
+        try {
+            response = await fetch(paymentUrl, {
+                method: "GET",
+                redirect: "follow",
+                signal: controller.signal,
+                headers: {
+                    "Accept": "text/html,application/xhtml+xml"
+                }
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
+
+        if (!response.ok) {
+            return false;
+        }
+
+        const html = await response.text();
+        const isPaid = detectPaidStatusFromHtml(html);
+        if (!isPaid) {
+            return false;
+        }
+
+        await releaseAccessFromPaymentData({
+            email: user.email,
+            userId: user.id,
+            reference: `falcon_user_${user.id}`,
+            paymentId: `bling-public-page-${user.id}`,
+            status: "paid",
+            amount: 0
+        });
+
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export const GetPaymentAccessStatusController = async (req: Request, res: Response) => {
     try {
         const authUserId = Number(req.body.userId);
@@ -496,6 +586,16 @@ export const GetPaymentAccessStatusController = async (req: Request, res: Respon
         }
 
         const isPremium = await reconcilePremiumFromStoredPayments(user);
+        if (!isPremium) {
+            const reconciledFromPage = await reconcilePremiumFromPublicBlingPage(user, paymentUrl);
+            if (reconciledFromPage) {
+                return res.status(200).json({
+                    isPremium: true,
+                    paymentRequired: false,
+                    paymentUrl
+                });
+            }
+        }
 
         return res.status(200).json({
             isPremium,

@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagamento PIX - Falcon</title>
+    <title>PIX - Falcon</title>
     <style>
         :root {
             --bg: #0a0e27;
             --card: #111736;
             --text: #e8ecff;
-            --muted: #aab3d9;
             --accent: #00ff88;
             --accent-dark: #00cc6f;
         }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
             min-height: 100vh;
@@ -23,45 +24,36 @@
             padding: 20px;
             background: radial-gradient(circle at 20% 10%, #1a2352, var(--bg));
             color: var(--text);
-            font-family: Inter, Arial, sans-serif;
+            font-family: Arial, sans-serif;
         }
+
         .card {
             width: 100%;
-            max-width: 460px;
+            max-width: 420px;
             background: var(--card);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 18px;
-            padding: 22px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+            padding: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
         }
-        h1 { margin: 0 0 8px; font-size: 1.45rem; }
-        p { margin: 0 0 14px; color: var(--muted); }
+
         .qr-wrap {
             display: flex;
             justify-content: center;
             background: #fff;
             border-radius: 14px;
             padding: 14px;
-            margin: 16px 0;
+            margin: 0 0 12px;
         }
+
         .qr-wrap img {
-            width: 240px;
-            height: 240px;
+            width: 250px;
+            height: 250px;
             object-fit: contain;
         }
-        .label { font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
-        .box {
+
+        button {
             width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(0,0,0,0.25);
-            color: var(--text);
-            word-break: break-all;
-            margin-bottom: 10px;
-        }
-        .actions { display: grid; gap: 10px; margin-top: 8px; }
-        button, a.btn {
             border: none;
             border-radius: 10px;
             padding: 12px 14px;
@@ -70,51 +62,24 @@
             font-weight: 700;
             cursor: pointer;
             text-align: center;
-            text-decoration: none;
         }
-        button.secondary {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.25);
-            color: var(--text);
-            font-weight: 600;
-        }
-        button:hover, a.btn:hover { background: var(--accent-dark); }
-        #feedback { margin-top: 10px; color: var(--accent); font-size: 0.92rem; min-height: 18px; }
+
+        button:hover { background: var(--accent-dark); }
+        button:disabled { opacity: 0.7; cursor: not-allowed; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>Pagamento via PIX</h1>
-        <p>Escaneie o QR Code ou copie a chave PIX para concluir o pagamento e liberar o chat.</p>
-        <p style="margin-top: -6px; color: #00ff88; font-weight: 700;">Valor: <span id="pix-amount-label">R$ 1,00</span></p>
-
         <div class="qr-wrap">
             <img id="pix-qr" alt="QR Code PIX">
         </div>
-
-        <div class="label">Chave PIX</div>
-        <div class="box" id="pix-key-box">Carregando...</div>
-
-        <div class="label">PIX Copia e Cola</div>
-        <div class="box" id="pix-copy-paste-box">Gerando código...</div>
-
-        <div class="actions">
-            <button id="copy-key-btn">Copiar chave PIX</button>
-            <button id="copy-code-btn">Copiar PIX copia e cola</button>
-            <a class="btn secondary" href="/index.html">Voltar para o chat</a>
-        </div>
-
-        <div id="feedback"></div>
+        <button id="copy-code-btn">Copiar PIX</button>
     </div>
 
     <script>
         const pixQr = document.getElementById("pix-qr");
-        const pixKeyBox = document.getElementById("pix-key-box");
-        const pixCodeBox = document.getElementById("pix-copy-paste-box");
-        const copyKeyBtn = document.getElementById("copy-key-btn");
         const copyCodeBtn = document.getElementById("copy-code-btn");
-        const feedback = document.getElementById("feedback");
-        const pixAmountLabel = document.getElementById("pix-amount-label");
+        let pixPayload = "";
 
         function emvField(id, value) {
             const size = String(value.length).padStart(2, "0");
@@ -179,12 +144,17 @@
             return base + crc16(base);
         }
 
-        async function copyToClipboard(text, successMsg) {
+        async function copyToClipboard(text) {
+            if (!text) return;
+            const previous = copyCodeBtn.textContent;
             try {
                 await navigator.clipboard.writeText(text);
-                feedback.textContent = successMsg;
-            } catch (err) {
-                feedback.textContent = "Não foi possível copiar automaticamente.";
+                copyCodeBtn.textContent = "PIX copiado";
+                setTimeout(() => {
+                    copyCodeBtn.textContent = previous;
+                }, 1600);
+            } catch {
+                copyCodeBtn.textContent = "Nao foi possivel copiar";
             }
         }
 
@@ -199,26 +169,17 @@
                 const amount = Number(data.amount || 1);
 
                 if (!pixKey) {
-                    throw new Error("PIX_KEY não configurado no servidor.");
+                    throw new Error("PIX key nao configurada.");
                 }
 
-                const pixPayload = buildPixPayload(pixKey, receiverName, city, amount);
-                const qrUrl = "https://quickchart.io/qr?size=300&text=" + encodeURIComponent(pixPayload);
-
-                pixKeyBox.textContent = pixKey;
-                pixCodeBox.textContent = pixPayload;
+                pixPayload = buildPixPayload(pixKey, receiverName, city, amount);
+                const qrUrl = "https://quickchart.io/qr?size=320&text=" + encodeURIComponent(pixPayload);
                 pixQr.src = qrUrl;
-                if (pixAmountLabel) {
-                    pixAmountLabel.textContent = `R$ ${Number.isFinite(amount) ? amount.toFixed(2).replace(".", ",") : "1,00"}`;
-                }
 
-                copyKeyBtn.onclick = () => copyToClipboard(pixKey, "Chave PIX copiada.");
-                copyCodeBtn.onclick = () => copyToClipboard(pixPayload, "PIX copia e cola copiado.");
-                feedback.textContent = "Após pagar, volte ao chat e clique em 'Já paguei, verificar acesso'.";
-            } catch (error) {
-                pixKeyBox.textContent = "Erro ao carregar dados PIX.";
-                pixCodeBox.textContent = "Erro ao gerar código.";
-                feedback.textContent = error?.message || "Erro inesperado.";
+                copyCodeBtn.onclick = () => copyToClipboard(pixPayload);
+            } catch {
+                copyCodeBtn.disabled = true;
+                copyCodeBtn.textContent = "Erro ao gerar PIX";
             }
         }
 
