@@ -7,18 +7,14 @@
     <link rel="stylesheet" href="style.css">
     <style>
         body { background: var(--bg-primary); color: var(--text-primary); }
-        .pay-container { max-width: 620px; margin: 40px auto; background: var(--bg-secondary); padding: 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-        .pay-container h1 { margin-bottom: 4px; }
-        .pay-container p { color: var(--text-secondary); margin-bottom: 12px; }
-        .form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-top: 8px; }
-        label { font-weight: 600; font-size: 0.95rem; }
-        input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color, #223); background: #0f172a; color: #e5e7eb; }
-        .pix-box { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 16px; }
-        .pix-key { width: 100%; background: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; word-break: break-all; }
+        .pay-container { max-width: 520px; margin: 40px auto; background: var(--bg-secondary); padding: 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        .pay-container h1 { margin-bottom: 8px; }
+        .pay-container p { color: var(--text-secondary); margin-bottom: 12px; text-align: center; }
+        .pix-box { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 8px; }
+        .pix-key { width: 100%; background: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; word-break: break-all; text-align: center; }
         .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .btn-copy, .btn-back, .btn-generate { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; letter-spacing: 0.01em; }
+        .btn-copy, .btn-back { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; letter-spacing: 0.01em; }
         .btn-copy { background: var(--accent-color); color: #0b1729; }
-        .btn-generate { background: #22d3ee; color: #0b1729; }
         .btn-back { background: #334155; color: #e5e7eb; }
         .qr { background: #fff; padding: 12px; border-radius: 12px; }
         .note { font-size: 0.9rem; color: var(--text-secondary); text-align: center; }
@@ -28,18 +24,7 @@
     <div id="chat-app" style="max-width:560px; height:auto;">
         <div class="pay-container">
             <h1>Pagamento PIX</h1>
-            <p>Use esta página apenas para pagar via PIX. Depois envie o comprovante no chat.</p>
-
-            <div class="form-grid">
-                <div>
-                    <label for="valor">Valor (R$)</label>
-                    <input id="valor" type="number" step="0.01" min="0.01" value="17.00" readonly>
-                </div>
-                <div>
-                    <label for="descricao">Identificador (opcional)</label>
-                    <input id="descricao" type="text" maxlength="20" placeholder="Ex.: plano-1mes">
-                </div>
-            </div>
+            <p>Valor: <strong>R$ 100,00</strong> • Chave PIX: <strong>franciscoclassname@gmail.com</strong></p>
 
             <div class="pix-box">
                 <div class="qr">
@@ -47,11 +32,10 @@
                 </div>
                 <div class="pix-key" id="pix-key">franciscoclassname@gmail.com</div>
                 <div class="actions">
-                    <button class="btn-generate" id="btn-generate">Gerar QR e Copia/Cola</button>
                     <button class="btn-copy" id="copy-key">Copiar chave</button>
                     <button class="btn-back" onclick="window.location.href='index.html'">Voltar ao chat</button>
                 </div>
-                <p class="note">Chave PIX: <strong>franciscoclassname@gmail.com</strong> • Copie a chave ou use o QR para pagar.</p>
+                <p class="note">Use o QR ou copie o código para pagar. Envie o comprovante pelo chat.</p>
             </div>
         </div>
     </div>
@@ -62,12 +46,10 @@
             const key = "franciscoclassname@gmail.com";
             const merchant = "FALCON AI";
             const city = "SAOPAULO";
+            const amount = 100.00; // valor fixo
 
             const qrImg = document.getElementById("pix-qr");
             const copyBtn = document.getElementById("copy-key");
-            const btnGenerate = document.getElementById("btn-generate");
-            const valorInput = document.getElementById("valor");
-            const descInput = document.getElementById("descricao");
             const pixKeyBox = document.getElementById("pix-key");
 
             function emv(id, value) {
@@ -87,11 +69,10 @@
                 return crc.toString(16).toUpperCase().padStart(4, "0");
             }
 
-            function buildPayload(amount, desc) {
+            function buildPayload(amount) {
                 const gui = emv("00", "BR.GOV.BCB.PIX");
                 const keyField = emv("01", key);
-                const descField = desc ? emv("02", desc) : "";
-                const merchantAccount = emv("26", gui + keyField + descField);
+                const merchantAccount = emv("26", gui + keyField);
                 const merchantCat = emv("52", "0000");
                 const currency = emv("53", "986");
                 const amt = emv("54", Number(amount).toFixed(2));
@@ -105,19 +86,12 @@
                 return payload + checksum;
             }
 
-            function render(amount, desc) {
-                const payload = buildPayload(amount, desc);
+            function render(amount) {
+                const payload = buildPayload(amount);
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payload)}`;
                 qrImg.src = qrUrl;
                 pixKeyBox.textContent = payload;
             }
-
-            btnGenerate.onclick = () => {
-                const amt = 17.00; // valor fixo
-                valorInput.value = amt.toFixed(2);
-                const desc = (descInput.value || "").trim().substring(0, 20);
-                render(amt, desc);
-            };
 
             copyBtn.onclick = async () => {
                 try {
@@ -130,7 +104,7 @@
             };
 
             // render inicial
-            render(17.00, descInput.value);
+            render(amount);
         })();
     </script>
 </body>
