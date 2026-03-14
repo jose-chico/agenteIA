@@ -56,7 +56,8 @@
 
             if (response.ok) {
                 alert("Cadastro realizado com sucesso!");
-                window.location.href = "login.html";
+                // Redireciona para a tela de login na raiz (fora da pasta /falcon)
+                window.location.href = "../login.html";
             } else {
                 alert("Erro: " + (data.error || "Falha ao cadastrar"));
             }
