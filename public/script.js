@@ -249,9 +249,14 @@ function renderMessage(content, senderType, timestamp, msgId, isRead = false) {
     const hora = new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const isImage = content.includes("/uploads/") || content.match(/\.(jpeg|jpg|gif|png|webp)$/i);
 
+    const linkify = (text) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    };
+
     let htmlContent = isImage
         ? `<img src="${content}" class="chat-image" onclick="window.open('${content}')" alt="Imagem">`
-        : `<p>${content}</p>`;
+        : `<p>${linkify(content)}</p>`;
 
     // Normaliza o senderType para garantir comparação correta
     const rawType = senderType || "CLIENTE";

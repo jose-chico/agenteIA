@@ -117,9 +117,14 @@ function renderAdminMessage(content, senderType, timestamp, msgId, isRead = fals
     const time = new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const isImage = content.includes("/uploads/") || content.match(/\.(jpeg|jpg|gif|png|webp)$/i);
 
+    const linkify = (text) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    };
+
     let htmlContent = isImage
         ? `<img src="${content}" class="chat-image" onclick="window.open('${content}')" alt="Imagem do chat">`
-        : `<span>${content}</span>`;
+        : `<span>${linkify(content)}</span>`;
 
     // Status de leitura (apenas para mensagens do admin)
     const readStatus = senderType === "ADMIN" ? `<span class="read-status" style="font-size:10px; opacity:0.7; margin-left:5px;">${isRead ? "✓✓" : "✓"}</span>` : "";
