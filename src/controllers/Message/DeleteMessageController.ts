@@ -23,14 +23,13 @@ export const DeleteMessageController = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Mensagem não encontrada." });
         }
 
-        // Validar permissão: usuário só pode deletar suas próprias mensagens
-        const isOwner = messageExists.usuarioId === userId;
-        
-        if (!isOwner) {
-            return res.status(403).json({ error: "Você não tem permissão para deletar esta mensagem." });
-        }
-
         if (mode === "TODOS") {
+            // Validar permissão: só quem enviou pode apagar para todos
+            const isOwner = messageExists.usuarioId === userId;
+            if (!isOwner) {
+                return res.status(403).json({ error: "Você não tem permissão para deletar esta mensagem para todos." });
+            }
+
             // Apaga o registro do banco de dados definitivamente
             await prisma.message.delete({
                 where: { id: messageId }
@@ -45,20 +44,26 @@ export const DeleteMessageController = async (req: Request, res: Response) => {
             io.to("admin").emit("messageDeleted", { id: messageExists.id });
 
             return res.json({ message: "Mensagem apagada para todos!", mode: "TODOS", id: messageId });
-        } else {
-            // No "Apagar para mim", adicionamos o ID do usuário na lista de "deletedBy"
-            // Isso persiste a exclusão para este usuário específico sem afetar os outros
-            await prisma.message.update({
-                where: { id: messageId },
-                data: {
-                    deletedBy: {
-                        push: userId
-                    }
-                }
-            });
-
-            return res.json({ message: "Mensagem removida da sua visualização.", mode: "MIM", id: messageId });
         }
+
+        // --- Apagar somente para mim (estilo WhatsApp) ---
+        // Permite remover qualquer mensagem da própria visualização, desde que o usuário esteja na conversa
+        const inConversation = messageExists.usuarioId === userId || messageExists.clienteId === userId;
+        if (!inConversation) {
+            return res.status(403).json({ error: "Você não participa desta conversa." });
+        }
+
+        const alreadyDeletedBy = messageExists.deletedBy || [];
+        const newDeletedBy = Array.from(new Set([...alreadyDeletedBy, userId]));
+
+        await prisma.message.update({
+            where: { id: messageId },
+            data: {
+                deletedBy: { set: newDeletedBy }
+            }
+        });
+
+        return res.json({ message: "Mensagem removida da sua visualização.", mode: "MIM", id: messageId });
     } catch (error) {
         console.error("Erro ao deletar mensagem:", error);
         return res.status(500).json({ error: "Erro interno ao apagar mensagem." });
