@@ -6,11 +6,16 @@ const attachBtn = document.querySelector(".attach-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const statusEscritaCliente = document.getElementById("status-escrita-cliente");
 const clientSound = document.getElementById("notification-sound-client");
+const paywallModal = document.getElementById("paywall-modal");
+const paywallMessage = document.getElementById("paywall-message");
+const paywallPayBtn = document.getElementById("paywall-pay-btn");
+const paywallRefreshBtn = document.getElementById("paywall-refresh-btn");
+const paywallLogoutBtn = document.getElementById("paywall-logout-btn");
 
 const token = localStorage.getItem("token");
 let meuId = null;
 let typingTimeout;
-let chatUnlocked = true;
+let chatUnlocked = false;
 
 const socket = window.io(window.location.origin, {
     transports: ["websocket", "polling"],
@@ -83,6 +88,53 @@ function setChatDisabled(disabled) {
     if (messageInput) messageInput.disabled = disabled;
     if (btnEnviar) btnEnviar.disabled = disabled;
     if (attachBtn) attachBtn.disabled = disabled;
+}
+
+function showPaywall(message) {
+    setChatDisabled(true);
+    chatUnlocked = false;
+    if (paywallMessage) {
+        paywallMessage.innerText = message || "Para liberar o chat, realize o pagamento via PIX e clique em Verificar autorização.";
+    }
+    if (paywallPayBtn) {
+        paywallPayBtn.href = "/pagamento.html";
+    }
+    if (paywallModal) paywallModal.style.display = "flex";
+}
+
+function hidePaywall() {
+    if (paywallModal) paywallModal.style.display = "none";
+    chatUnlocked = true;
+    setChatDisabled(false);
+}
+
+async function checkPaymentAccess() {
+    if (!token) return false;
+    try {
+        const response = await fetch("/payments/manual-status", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!checkAuth(response)) return false;
+
+        if (!response.ok) {
+            showPaywall("Não foi possível validar agora. Tente novamente.");
+            return false;
+        }
+
+        const data = await response.json();
+        if (data.isPremium) {
+            hidePaywall();
+            return true;
+        }
+
+        showPaywall("Pagamento pendente. Após pagar, clique em Verificar autorização.");
+        return false;
+    } catch (error) {
+        console.error("Erro ao verificar pagamento:", error);
+        showPaywall("Erro ao validar pagamento. Tente novamente.");
+        return false;
+    }
 }
 
 // --- FUNÇÃO PARA APAGAR MENSAGEM (REMODELADA) ---
@@ -406,8 +458,9 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "login.html";
         return;
     }
-    setChatDisabled(false);
-    carregarMeuHistorico();
+    checkPaymentAccess().then((ok) => {
+        if (ok) carregarMeuHistorico();
+    });
 });
 
 if (btnEnviar) {
@@ -448,6 +501,25 @@ if (attachBtn && imageInputClient) {
 
 if (logoutBtn) {
     logoutBtn.onclick = () => {
+        localStorage.clear();
+        window.location.href = "login.html";
+    };
+}
+
+if (paywallRefreshBtn) {
+    paywallRefreshBtn.onclick = async () => {
+        const canAccess = await checkPaymentAccess();
+        if (canAccess) {
+            await carregarMeuHistorico();
+            showToast("Acesso liberado!", "success");
+        } else {
+            showToast("Ainda não liberado. Tente novamente em instantes.", "info");
+        }
+    };
+}
+
+if (paywallLogoutBtn) {
+    paywallLogoutBtn.onclick = () => {
         localStorage.clear();
         window.location.href = "login.html";
     };
