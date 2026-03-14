@@ -419,11 +419,9 @@ async function enviarMensagemAdmin() {
     const conteudo = adminReply.value.trim();
     const isBroadcast = broadcastModeCheckbox.checked;
 
-    // Se não está em modo broadcast, precisa ter cliente selecionado
-    if (!conteudo || (!isBroadcast && !clienteSelecionadoId)) {
-        if (!isBroadcast && !clienteSelecionadoId) {
-            showToast("Selecione um cliente ou ative o modo broadcast", "error");
-        }
+    if (!conteudo) return;
+    if (!isBroadcast && !clienteSelecionadoId) {
+        showToast("Selecione um cliente para responder.", "error");
         return;
     }
 
@@ -444,7 +442,7 @@ async function enviarMensagemAdmin() {
                 adminReply.value = "";
                 showToast(`📢 Mensagem enviada para ${data.count} cliente(s)`, "success");
             } else {
-                const error = await response.json();
+                const error = await response.json().catch(() => ({}));
                 showToast(error.error || "Erro ao enviar broadcast", "error");
             }
         } else {
@@ -462,12 +460,17 @@ async function enviarMensagemAdmin() {
             });
 
             if (response.ok) {
+                const novaMsg = await response.json();
                 adminReply.value = "";
+                renderAdminMessage(novaMsg.content, novaMsg.senderType, novaMsg.createdAt, novaMsg.id, novaMsg.isRead);
                 socket.emit("typing", {
                     clienteId: clienteSelecionadoId,
                     senderType: "ADMIN",
                     isTyping: false
                 });
+            } else {
+                const error = await response.json().catch(() => ({}));
+                showToast(error.error || "Erro ao enviar mensagem", "error");
             }
         }
     } catch (error) {
