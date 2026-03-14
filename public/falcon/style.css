@@ -460,14 +460,23 @@ body {
     transition: transform 300ms cubic-bezier(.2,.9,.2,1), box-shadow 200ms ease;
     z-index: 2000;
     pointer-events: none;
+    background: transparent;
 }
 .side-chat.open {
     transform: translateX(0);
     box-shadow: 8px 0 30px rgba(0,0,0,0.6);
     pointer-events: auto;
 }
+.side-chat .chat-toggle {
+    pointer-events: auto;
+}
 .side-chat.closed .side-chat-inner {
     visibility: hidden;
+    opacity: 0;
+}
+.side-chat.open .side-chat-inner {
+    visibility: visible;
+    opacity: 1;
 }
 .side-chat .chat-toggle {
     position: absolute;
