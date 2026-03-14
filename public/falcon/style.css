@@ -471,6 +471,11 @@ body {
     display: block;
     opacity: 1;
 }
+.side-chat.closed {
+    display: none !important;
+    pointer-events: none !important;
+    opacity: 0;
+}
 .side-chat .chat-toggle {
     pointer-events: auto;
 }

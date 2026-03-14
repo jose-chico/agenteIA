@@ -86,7 +86,6 @@ function openSideChat(route = "/chat") {
     if (!sideChat) return;
     sideChat.classList.remove("closed");
     sideChat.classList.add("open");
-    sideChat.style.display = "block";
     sideChat.setAttribute("aria-hidden", "false");
     syncChatToggleState();
 
@@ -116,7 +115,6 @@ function closeSideChat() {
     if (!sideChat) return;
     sideChat.classList.remove("open");
     sideChat.classList.add("closed");
-    sideChat.style.display = "none";
     sideChat.setAttribute("aria-hidden", "true");
     syncChatToggleState();
 }
