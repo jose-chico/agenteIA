@@ -7,14 +7,18 @@
     <link rel="stylesheet" href="style.css">
     <style>
         body { background: var(--bg-primary); color: var(--text-primary); }
-        .pay-container { max-width: 520px; margin: 40px auto; background: var(--bg-secondary); padding: 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-        .pay-container h1 { margin-bottom: 8px; }
+        .pay-container { max-width: 620px; margin: 40px auto; background: var(--bg-secondary); padding: 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        .pay-container h1 { margin-bottom: 4px; }
         .pay-container p { color: var(--text-secondary); margin-bottom: 12px; }
-        .pix-box { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 12px; }
+        .form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-top: 8px; }
+        label { font-weight: 600; font-size: 0.95rem; }
+        input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color, #223); background: #0f172a; color: #e5e7eb; }
+        .pix-box { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 16px; }
         .pix-key { width: 100%; background: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; word-break: break-all; }
         .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .btn-copy, .btn-back { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .btn-copy { background: var(--accent-color); color: #fff; }
+        .btn-copy, .btn-back, .btn-generate { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; letter-spacing: 0.01em; }
+        .btn-copy { background: var(--accent-color); color: #0b1729; }
+        .btn-generate { background: #22d3ee; color: #0b1729; }
         .btn-back { background: #334155; color: #e5e7eb; }
         .qr { background: #fff; padding: 12px; border-radius: 12px; }
         .note { font-size: 0.9rem; color: var(--text-secondary); text-align: center; }
@@ -24,30 +28,47 @@
     <div id="chat-app" style="max-width:560px; height:auto;">
         <div class="pay-container">
             <h1>Pagamento PIX</h1>
-            <p>Valor: <strong>R$ 0,20</strong></p>
-            <p>Chave PIX (PicPay): <strong>franciscoclassname@gmail.com</strong></p>
+            <p>Use esta página apenas para pagar via PIX. Depois envie o comprovante no chat.</p>
+
+            <div class="form-grid">
+                <div>
+                    <label for="valor">Valor (R$)</label>
+                    <input id="valor" type="number" step="0.01" min="0.01" value="100.00" readonly>
+                </div>
+                <div>
+                    <label for="descricao">Identificador (opcional)</label>
+                    <input id="descricao" type="text" maxlength="20" placeholder="Ex.: plano-1mes">
+                </div>
+            </div>
+
             <div class="pix-box">
                 <div class="qr">
                     <img id="pix-qr" src="" alt="QR Code PIX" width="240" height="240" />
                 </div>
                 <div class="pix-key" id="pix-key">franciscoclassname@gmail.com</div>
                 <div class="actions">
+                    <button class="btn-generate" id="btn-generate">Gerar QR e Copia/Cola</button>
                     <button class="btn-copy" id="copy-key">Copiar chave</button>
                     <button class="btn-back" onclick="window.location.href='index.html'">Voltar ao chat</button>
                 </div>
-                <p class="note">Após pagar, envie o comprovante. Quando for aprovado, clique em "Verificar autorização" no chat.</p>
+                <p class="note">Chave PIX: <strong>franciscoclassname@gmail.com</strong> • Copie a chave ou use o QR para pagar.</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Monta payload EMV Pix simples e gera QR via serviço de QR
+        // Monta payload EMV Pix simples e gera QR via serviço gratuito
         (function() {
             const key = "franciscoclassname@gmail.com";
-            const amount = 0.20;
             const merchant = "FALCON AI";
             const city = "SAOPAULO";
-            const txid = "FALCONCHAT";
+
+            const qrImg = document.getElementById("pix-qr");
+            const copyBtn = document.getElementById("copy-key");
+            const btnGenerate = document.getElementById("btn-generate");
+            const valorInput = document.getElementById("valor");
+            const descInput = document.getElementById("descricao");
+            const pixKeyBox = document.getElementById("pix-key");
 
             function emv(id, value) {
                 const len = String(value).length.toString().padStart(2, "0");
@@ -66,37 +87,50 @@
                 return crc.toString(16).toUpperCase().padStart(4, "0");
             }
 
-            // Guideline BR Code
-            const gui = emv("00", "BR.GOV.BCB.PIX");
-            const keyField = emv("01", key);
-            const desc = ""; // opcional
-            const merchantAccount = emv("26", gui + keyField + (desc ? emv("02", desc) : ""));
+            function buildPayload(amount, desc) {
+                const gui = emv("00", "BR.GOV.BCB.PIX");
+                const keyField = emv("01", key);
+                const descField = desc ? emv("02", desc) : "";
+                const merchantAccount = emv("26", gui + keyField + descField);
+                const merchantCat = emv("52", "0000");
+                const currency = emv("53", "986");
+                const amt = emv("54", Number(amount).toFixed(2));
+                const country = emv("58", "BR");
+                const cityField = emv("60", city);
+                const nameField = emv("59", merchant);
+                const txid = emv("05", "FALCON" + Date.now().toString().slice(-6));
+                const addData = emv("62", txid);
+                let payload = emv("00", "01") + emv("01", "12") + merchantAccount + merchantCat + currency + amt + country + nameField + cityField + addData + "6304";
+                const checksum = crc16(payload);
+                return payload + checksum;
+            }
 
-            const merchantCat = emv("52", "0000");
-            const currency = emv("53", "986");
-            const amt = emv("54", amount.toFixed(2));
-            const country = emv("58", "BR");
-            const cityField = emv("60", city);
-            const nameField = emv("59", merchant);
-            const addData = emv("62", emv("05", txid));
+            function render(amount, desc) {
+                const payload = buildPayload(amount, desc);
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payload)}`;
+                qrImg.src = qrUrl;
+                pixKeyBox.textContent = payload;
+            }
 
-            let payload = emv("00", "01") + emv("01", "12") + merchantAccount + merchantCat + currency + amt + country + nameField + cityField + addData + "6304";
-            const checksum = crc16(payload);
-            payload += checksum;
+            btnGenerate.onclick = () => {
+                const amt = 100.00; // valor fixo
+                valorInput.value = amt.toFixed(2);
+                const desc = (descInput.value || "").trim().substring(0, 20);
+                render(amt, desc);
+            };
 
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payload)}`;
-            document.getElementById("pix-qr").src = qrUrl;
-
-            const copyBtn = document.getElementById("copy-key");
             copyBtn.onclick = async () => {
                 try {
-                    await navigator.clipboard.writeText(key);
-                    copyBtn.textContent = "Chave copiada";
+                    await navigator.clipboard.writeText(pixKeyBox.textContent);
+                    copyBtn.textContent = "Copiado";
                     setTimeout(() => copyBtn.textContent = "Copiar chave", 2000);
                 } catch (e) {
                     copyBtn.textContent = "Copie manualmente";
                 }
             };
+
+            // render inicial
+            render(100.00, descInput.value);
         })();
     </script>
 </body>
