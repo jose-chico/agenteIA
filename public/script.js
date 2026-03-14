@@ -6,16 +6,11 @@ const attachBtn = document.querySelector(".attach-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const statusEscritaCliente = document.getElementById("status-escrita-cliente");
 const clientSound = document.getElementById("notification-sound-client");
-const paywallModal = document.getElementById("paywall-modal");
-const paywallMessage = document.getElementById("paywall-message");
-const paywallPayBtn = document.getElementById("paywall-pay-btn");
-const paywallRefreshBtn = document.getElementById("paywall-refresh-btn");
-const paywallLogoutBtn = document.getElementById("paywall-logout-btn");
 
 const token = localStorage.getItem("token");
 let meuId = null;
 let typingTimeout;
-let chatUnlocked = false;
+let chatUnlocked = true;
 
 const socket = window.io(window.location.origin, {
     transports: ["websocket", "polling"],
@@ -88,67 +83,6 @@ function setChatDisabled(disabled) {
     if (messageInput) messageInput.disabled = disabled;
     if (btnEnviar) btnEnviar.disabled = disabled;
     if (attachBtn) attachBtn.disabled = disabled;
-}
-
-function showPaywall(message, paymentUrl) {
-    setChatDisabled(true);
-    chatUnlocked = false;
-
-    if (paywallMessage) {
-        paywallMessage.innerText = message || "Para liberar o chat, abra o pagamento PIX e conclua a cobrança.";
-    }
-
-    if (paywallPayBtn) {
-        const hasUrl = Boolean(paymentUrl);
-        paywallPayBtn.href = hasUrl ? paymentUrl : "/pagamento.html";
-        paywallPayBtn.target = "_blank";
-        paywallPayBtn.rel = "noopener noreferrer";
-        paywallPayBtn.style.opacity = "1";
-        paywallPayBtn.style.pointerEvents = "auto";
-    }
-
-    if (paywallModal) {
-        paywallModal.style.display = "flex";
-    }
-}
-
-function hidePaywall() {
-    if (paywallModal) paywallModal.style.display = "none";
-    chatUnlocked = true;
-    setChatDisabled(false);
-}
-
-async function checkPaymentAccess() {
-    if (!token) return false;
-
-    try {
-        const response = await fetch("/payments/access-status", {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (!checkAuth(response)) return false;
-
-        if (!response.ok) {
-            showPaywall("Não foi possível validar seu pagamento agora. Tente novamente em instantes.", null);
-            return false;
-        }
-
-        const data = await response.json();
-        if (data.isPremium) {
-            hidePaywall();
-            return true;
-        }
-
-        showPaywall(
-            "Para entrar no chat do Falcon, o pagamento precisa estar confirmado.",
-            data.paymentUrl || null
-        );
-        return false;
-    } catch (error) {
-        console.error("Erro ao verificar pagamento:", error);
-        showPaywall("Erro ao validar pagamento. Tente novamente.", null);
-        return false;
-    }
 }
 
 // --- FUNÇÃO PARA APAGAR MENSAGEM (REMODELADA) ---
@@ -465,11 +399,8 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "login.html";
         return;
     }
-    checkPaymentAccess().then((canAccess) => {
-        if (canAccess) {
-            carregarMeuHistorico();
-        }
-    });
+    setChatDisabled(false);
+    carregarMeuHistorico();
 });
 
 if (btnEnviar) {
@@ -510,25 +441,6 @@ if (attachBtn && imageInputClient) {
 
 if (logoutBtn) {
     logoutBtn.onclick = () => {
-        localStorage.clear();
-        window.location.href = "login.html";
-    };
-}
-
-if (paywallRefreshBtn) {
-    paywallRefreshBtn.onclick = async () => {
-        const canAccess = await checkPaymentAccess();
-        if (canAccess) {
-            await carregarMeuHistorico();
-            showToast("Pagamento confirmado. Chat liberado!", "success");
-        } else {
-            showToast("Pagamento ainda não confirmado.", "info");
-        }
-    };
-}
-
-if (paywallLogoutBtn) {
-    paywallLogoutBtn.onclick = () => {
         localStorage.clear();
         window.location.href = "login.html";
     };
