@@ -66,8 +66,17 @@ export const CreateMessageController = async (req: Request, res: Response) => {
         if (senderType === "ADMIN") {
             io.to(userId.toString()).emit("newMessage", newMessage);
 
-            // Libera o acesso do cliente ao chat após confirmação manual (admin enviou mensagem)
-            if (clienteExiste?.usuarioId) {
+            // Libera o acesso do cliente somente se a mensagem do admin indicar aprovação de pagamento
+            const normalized = String(content || "").toLowerCase();
+            const aprovouPagamento =
+                normalized.includes("pagamento") &&
+                (
+                    normalized.includes("aprov") ||      // aprovado/aprovação
+                    normalized.includes("efetiv") ||     // efetivado/efetuar
+                    normalized.includes("confirm")       // confirmado
+                );
+
+            if (aprovouPagamento && clienteExiste?.usuarioId) {
                 await prisma.user.update({
                     where: { id: clienteExiste.usuarioId },
                     data: { isPremium: true }
