@@ -287,6 +287,13 @@ function renderMessage(content, senderType, timestamp, msgId, isRead = false) {
         div.style.transform = "scale(1)"; // Restaura se mover
     });
 
+    // Clique único (mobile/desktop) abre opções, exceto em links/imagens
+    div.addEventListener("click", (e) => {
+        const isMedia = e.target.closest("a, img");
+        if (isMedia) return;
+        openOptionsModal(msgId, isMyMessage);
+    });
+
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }

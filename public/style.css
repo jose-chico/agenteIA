@@ -205,21 +205,15 @@ header strong {
     border-radius: 4px;
     line-height: 1;
     transition: background 0.2s, opacity 0.2s;
-    opacity: 0;
-    /* Destacando o ícone */
+    opacity: 0.5;
     background: #fff;
-    /* Fundo branco para contraste */
     color: var(--accent-color);
-    /* Cor do ícone */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    /* Sombra para profundidade */
     font-weight: bold;
-    display: none;
-    /* Escondido no mobile */
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 24px;
-    /* Tamanho fixo para ficar redondinho */
     height: 24px;
 }
 
@@ -232,6 +226,13 @@ header strong {
 
     .message:hover .menu-icon {
         opacity: 1;
+    }
+}
+
+/* Em mobile mantemos visível o botão de opções */
+@media (max-width: 768px) {
+    .menu-icon {
+        opacity: 0.8;
     }
 }
 
