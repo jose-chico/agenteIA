@@ -3,7 +3,6 @@ import multer from "multer";
 import path from "path";
 import { AuthMiddleware } from "@/middlewares/auth";
 import { AdminMiddleware } from "@/middlewares/adminAuth";
-import { ChatAccessMiddleware } from "@/middlewares/chatAccess";
 
 // Controllers de Usuário
 import { CreateUserController } from "@/controllers/User/CreateUserController";
@@ -24,13 +23,6 @@ import { MarkAsReadController } from "@/controllers/Message/MarkAsReadController
 import { UnreadCountController } from "@/controllers/Message/UnreadCountController";
 import { BroadcastMessageController } from "@/controllers/Message/BroadcastMessageController";
 import { SubscribeController, GetVapidKeyController } from "@/controllers/Push/SubscribeController";
-import {
-    GetPaymentAccessStatusController,
-    GetBlingPaymentLinkController,
-    ConfirmBlingPaymentController,
-    BlingWebhookController,
-    GetPixInfoController
-} from "@/controllers/services/BlingPaymentController";
 
 const router = Router();
 
@@ -58,16 +50,16 @@ router.get("/clientes", AuthMiddleware, ListClientesController); // Volta para A
 router.delete("/clientes/:id", AdminMiddleware, DeleteClienteController);
 
 // --- ROTAS DE MENSAGEM ---
-router.get("/messages/me", AuthMiddleware, ChatAccessMiddleware, ListMyMessagesController);
-router.get("/messages/unread/count", AuthMiddleware, ChatAccessMiddleware, UnreadCountController);
-router.get("/messages/:clienteId", AuthMiddleware, ChatAccessMiddleware, ListMessagesController);
-router.post("/messages", AuthMiddleware, ChatAccessMiddleware, CreateMessageController);
+router.get("/messages/me", AuthMiddleware, ListMyMessagesController);
+router.get("/messages/unread/count", AuthMiddleware, UnreadCountController);
+router.get("/messages/:clienteId", AuthMiddleware, ListMessagesController);
+router.post("/messages", AuthMiddleware, CreateMessageController);
 router.post("/messages/broadcast", AdminMiddleware, BroadcastMessageController);
-router.delete("/messages/:id", AuthMiddleware, ChatAccessMiddleware, DeleteMessageController);
-router.patch("/messages/mark-read", AuthMiddleware, ChatAccessMiddleware, MarkAsReadController);
+router.delete("/messages/:id", AuthMiddleware, DeleteMessageController);
+router.patch("/messages/mark-read", AuthMiddleware, MarkAsReadController);
 
 // --- ROTA DE UPLOAD DE IMAGEM ---
-router.post("/messages/upload", AuthMiddleware, ChatAccessMiddleware, upload.single("image"), (req, res) => {
+router.post("/messages/upload", AuthMiddleware, upload.single("image"), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
     }
@@ -93,12 +85,5 @@ router.post("/messages/upload", AuthMiddleware, ChatAccessMiddleware, upload.sin
 // --- ROTAS DE PUSH NOTIFICATION ---
 router.get("/vapid-key", GetVapidKeyController);
 router.post("/subscribe", SubscribeController);
-
-// --- ROTAS DE PAGAMENTO (BLING) ---
-router.get("/payments/access-status", AuthMiddleware, GetPaymentAccessStatusController);
-router.get("/payments/bling/link", AuthMiddleware, GetBlingPaymentLinkController);
-router.get("/payments/pix-info", GetPixInfoController);
-router.post("/payments/bling/confirm", AdminMiddleware, ConfirmBlingPaymentController);
-router.post("/payments/bling/webhook", BlingWebhookController);
 
 export { router };
