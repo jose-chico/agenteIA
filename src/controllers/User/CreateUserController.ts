@@ -30,6 +30,35 @@ export const CreateUserController = async (req: Request, res: Response) => {
             }
         });
 
+        // Garante registro na tabela cliente para este usuário
+        await prisma.cliente.upsert({
+            where: { id: newUser.id },
+            update: {
+                nome: name,
+                email: email,
+                usuarioId: newUser.id
+            },
+            create: {
+                id: newUser.id,
+                nome: name,
+                email: email,
+                usuarioId: newUser.id
+            }
+        });
+
+        // Mensagem automática de boas-vindas com o link de pagamento
+        const welcomeMessage = "Bem-vindo! Para liberar o agente de IA e operar day trade no Mini-Índice, realize o pagamento diário de R$100 em: https://agenteia-22ds.onrender.com/pagamento.html";
+
+        await prisma.message.create({
+            data: {
+                content: welcomeMessage,
+                type: "text",
+                senderType: "ADMIN",
+                usuarioId: newUser.id,
+                clienteId: newUser.id
+            }
+        });
+
         return res.status(201).json({ message: "Usuário criado com sucesso!", id: newUser.id });
 
     } catch (error) {
