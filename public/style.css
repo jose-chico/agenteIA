@@ -130,6 +130,18 @@ header strong {
     animation: fadeIn 0.3s ease;
 }
 
+/* Links dentro das mensagens (cliente e admin) */
+.message a {
+    color: #ffd21f;
+    text-decoration: underline;
+}
+
+.message a:hover,
+.message a:focus {
+    color: #ffe680;
+    text-decoration: underline;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
