@@ -227,6 +227,13 @@ socket.on("messageDeleted", (data) => {
     if (msgElement) msgElement.remove();
 });
 
+// Liberação imediata quando admin aprovar via mensagem
+socket.on("paymentApproved", () => {
+    hidePaywall();
+    showToast("Acesso liberado!", "success");
+    carregarMeuHistorico();
+});
+
 socket.on("displayTyping", (data) => {
     if (data.senderType === "ADMIN" && statusEscritaCliente) {
         statusEscritaCliente.innerText = data.isTyping ? "O suporte está digitando..." : "";

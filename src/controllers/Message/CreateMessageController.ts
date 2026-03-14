@@ -66,6 +66,17 @@ export const CreateMessageController = async (req: Request, res: Response) => {
         if (senderType === "ADMIN") {
             io.to(userId.toString()).emit("newMessage", newMessage);
 
+            // Libera o acesso do cliente ao chat após confirmação manual (admin enviou mensagem)
+            if (clienteExiste?.usuarioId) {
+                await prisma.user.update({
+                    where: { id: clienteExiste.usuarioId },
+                    data: { isPremium: true }
+                });
+
+                // Notifica o cliente em tempo real para liberar o paywall
+                io.to(clienteExiste.id.toString()).emit("paymentApproved", { userId: clienteExiste.usuarioId });
+            }
+
             // --- NOTIFICAÇÃO PUSH PARA O CLIENTE (Se a msg for do Admin) ---
             if (clienteExiste) {
                 // Busca subscrições do cliente
