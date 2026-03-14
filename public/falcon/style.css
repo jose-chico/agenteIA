@@ -453,44 +453,42 @@ body {
     position: fixed;
     top: 0;
     left: 0;
+    width: 0;
+    height: 0;
+    z-index: 2000;
+    background: transparent;
+}
+.side-chat-inner {
+    position: fixed;
+    top: 0;
+    left: 0;
     height: 100vh;
     width: 360px;
     max-width: 85vw;
     transform: translateX(-100%);
     transition: transform 300ms cubic-bezier(.2,.9,.2,1), box-shadow 200ms ease, opacity 150ms ease;
-    z-index: 2000;
-    pointer-events: none;
-    background: transparent;
-    display: none;
+    background: linear-gradient(180deg, rgba(6,8,20,0.96), rgba(8,10,20,0.98));
+    border-right: 1px solid rgba(0,255,136,0.04);
+    display: flex;
+    flex-direction: column;
     opacity: 0;
+    pointer-events: none;
 }
-.side-chat.open {
+.side-chat.open .side-chat-inner {
     transform: translateX(0);
     box-shadow: 8px 0 30px rgba(0,0,0,0.6);
-    pointer-events: auto;
-    display: block;
     opacity: 1;
-}
-.side-chat.closed {
-    display: none !important;
-    pointer-events: none !important;
-    opacity: 0;
-}
-.side-chat .chat-toggle {
     pointer-events: auto;
 }
 .side-chat.closed .side-chat-inner {
-    visibility: hidden;
+    transform: translateX(-100%);
     opacity: 0;
-}
-.side-chat.open .side-chat-inner {
-    visibility: visible;
-    opacity: 1;
+    pointer-events: none;
 }
 .side-chat .chat-toggle {
-    position: absolute;
-    right: -56px;
-    top: 24px;
+    position: fixed;
+    left: 14px;
+    bottom: 14px;
     width: 48px;
     height: 48px;
     border-radius: 12px;
@@ -500,14 +498,7 @@ body {
     font-size: 20px;
     cursor: pointer;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-.side-chat-inner {
-    background: linear-gradient(180deg, rgba(6,8,20,0.96), rgba(8,10,20,0.98));
-    height: 100%;
-    border-right: 1px solid rgba(0,255,136,0.04);
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+    z-index: 2200;
 }
 .chat-header {
     display:flex;
@@ -546,18 +537,12 @@ body {
 
 /* Mobile: make chat full screen overlay when opened */
 @media (max-width: 767px) {
-    .side-chat {
-        width: 100%;
-        transform: translateX(-100%);
-        display: none;
+    .side-chat-inner {
+        width: 100vw;
     }
     .side-chat .chat-toggle {
-        right: 12px;
-        top: 12px;
-    }
-    .side-chat.open {
-        transform: translateX(0);
-        display: block;
+        left: 12px;
+        bottom: 12px;
     }
 
     .chat-header {
